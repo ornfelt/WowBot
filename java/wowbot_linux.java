@@ -767,12 +767,7 @@ public class wowbot {
 				// release button can be moved down if bot 
 				// ressed player but it expired before getting accepted
 				r.delay(500);
-				r.mouseMove(acceptRess.x, acceptRess.y+50);
-				r.delay(500);
-				r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-				r.delay(500);
-				r.mouseMove(acceptRess.x, acceptRess.y+60);
+				r.mouseMove(acceptRess.x, acceptRess.y+70);
 				r.delay(500);
 				r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
