@@ -1,30 +1,19 @@
 ﻿using System;
 using System.Linq;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace WowBot
 {
-    internal class ProcessHandler
+    internal static class ProcessHandler
     {
-        public void StartBotIfNotRunning()
-        {
-            string processName = "notepad";
-            //string processName = "wow";
-            if (!IsProcessRunning(processName))
-            {
-                Console.WriteLine($"Process {processName} is not running... Starting it!");
-                StartProcess("notepad.exe");
-            }
-            else
-                Console.WriteLine($"Process {processName} is running!");
-        }
-
-        private static bool IsProcessRunning(string processName)
+        internal static bool IsProcessRunning(string processName)
         {
             return Process.GetProcessesByName(processName).Any();
         }
 
-        private static void StartProcess(string processPath)
+        internal static void StartProcess(string processPath)
         {
             try
             {

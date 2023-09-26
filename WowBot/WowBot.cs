@@ -17,19 +17,8 @@ namespace WowBot
 {
     internal class WowBot
     {
-        internal class MousePos
-        {
-            public readonly int X;
-            public readonly int Y;
-
-            public MousePos(int x, int y)
-            {
-                X = x;
-                Y = y;
-            }
-        }
-
         /* Variables needed for Robot */
+        private readonly InputManager inputManager;
         private static Random rand = new Random();
         DateTimeFormatInfo dtf = new DateTimeFormatInfo { ShortDatePattern = "yy/MM/dd" };
         DateTime now;
@@ -58,7 +47,7 @@ namespace WowBot
         private const int AVTURNTIMERHORDE = 70;
 
         // Queue settings
-        private static bool isAcore = true; // AzerothCore / TrinityCore
+        private readonly bool isAcore = true; // AzerothCore / TrinityCore
         private static bool isArena = false; // Start with BG when random
         private static bool isGroup = false; // If group queue (BG only)
         private static bool isLowLevel = false; // If low level (special ordering of BGs)
@@ -77,9 +66,11 @@ namespace WowBot
         // The order of the BGs might change depending on current Call to Arms
         private Dictionary<int, int> bgOrderMap;
 
-        internal WowBot()
+        internal WowBot(bool isAcore, InputManager inputManager)
         {
             rand = new Random();
+            this.inputManager = inputManager;
+            this.isAcore = isAcore;
         }
 
         void SetCTA()
@@ -157,28 +148,6 @@ namespace WowBot
             return (differenceInSeconds % (occurence * MINUTES)) < (length * MINUTES);
         }
 
-        // Try to login
-        void TryLogin()
-        {
-            Thread.Sleep(2000);
-            // Press enter to get rid of DC message
-            SendEnter();
-            Thread.Sleep(1000);
-            // Ctrl-a to mark all text 
-            SendKeyWithControl(Keys.A);
-            Thread.Sleep(500);
-            SendKeys(isAcore ? "acore" : "tcore");
-            Thread.Sleep(200);
-            SendTab();
-            Thread.Sleep(200);
-            SendKeys("123");
-            Thread.Sleep(200);
-            SendEnter();
-            Thread.Sleep(5000);
-            SendEnter();
-            Thread.Sleep(5000);
-        }
-
         void SetPlayerSettings()
         {
             MySqlConnection connection = null;
@@ -205,7 +174,7 @@ namespace WowBot
                 if (!reader.Read())
                 {
                     Console.WriteLine("Player not logged in. Trying to log in...");
-                    TryLogin();
+                    inputManager.SendLogin(isAcore, true);
                     // Execute SQL again
                     reader.Close();
                     reader = command.ExecuteReader();
@@ -213,9 +182,7 @@ namespace WowBot
                     if (!reader.Read())
                     {
                         Console.WriteLine("Player still not logged in. Trying to log in once more...");
-                        Thread.Sleep(1000);
-                        SendEnter();
-                        TryLogin();
+                        inputManager.SendLogin(isAcore, false);
                         // Execute SQL again
                         reader.Close();
                         reader = command.ExecuteReader();
@@ -321,27 +288,27 @@ namespace WowBot
             int maxActionTime = 45;
             Thread.Sleep(1000);
             // Teleport to arena NPC
-            SendEnter();
+            inputManager.SendEnter();
             Thread.Sleep(200);
             if (isAlly)
-                SendKeys(".go creature 68938"); // select guid from creature where id1=19911; (id from arena npc from wowhead)
+                inputManager.SendKeys(".go creature 68938"); // select guid from creature where id1=19911; (id from arena npc from wowhead)
             else
-                SendKeys(".go creature 4762"); // select guid from creature where id1=19912; (id from arena npc from wowhead)
-            SendEnter();
+                inputManager.SendKeys(".go creature 4762"); // select guid from creature where id1=19912; (id from arena npc from wowhead)
+            inputManager.SendEnter();
 
             Thread.Sleep(5000);
             // /target arena char and interact with him
-            SendEnter();
+            inputManager.SendEnter();
             // Enter '/' manually for Linux
             Thread.Sleep(200);
-            SendKeyWithShift(Keys.D7);
+            inputManager.SendKeyWithShift(Keys.D7);
             if (isAlly)
-                SendKeys("target beka");
+                inputManager.SendKeys("target beka");
             else
-                SendKeys("target zeggon");
-            SendEnter();
+                inputManager.SendKeys("target zeggon");
+            inputManager.SendEnter();
             Thread.Sleep(700);
-            SendKey(Keys.D9);
+            inputManager.SendKey(Keys.D9);
             Thread.Sleep(1300);
 
             if (arenaId == 100) // Hard coded, 100 means random arena
@@ -361,21 +328,18 @@ namespace WowBot
                 targetPoint = new Point(arena5v5.X, arena5v5.Y); // 5v5
 
             Cursor.Position = targetPoint;
-            Thread.Sleep(700);
-            MouseClick();
+            inputManager.MouseClick();
 
             Thread.Sleep(1000);
             Cursor.Position = new Point(queueJoin.X, queueJoin.Y); // Join queue
-            Thread.Sleep(500);
-            MouseClick();
+            inputManager.MouseClick();
 
             Thread.Sleep(3000);
             Cursor.Position = new Point(queueAccept.X, queueAccept.Y); // Accept queue inv
-            Thread.Sleep(500);
-            MouseClick();
+            inputManager.MouseClick();
 
             Thread.Sleep(5000);
-            MouseClick();
+            inputManager.MouseClick();
 
             // Wait for arena to start...
             for (int i = 0; i < 5; i++)
@@ -383,12 +347,12 @@ namespace WowBot
                 Thread.Sleep(9000);
                 if (i == 0)
                 {
-                    SendKeys("w");
+                    inputManager.SendKeys("w");
                     Thread.Sleep(1000);
                 }
                 else if (i == 1)
                 {
-                    SendKeys("d");
+                    inputManager.SendKeys("d");
                     Thread.Sleep(350);
                 }
                 else
@@ -396,7 +360,7 @@ namespace WowBot
                     // 20 % chance of jumping, else use spell (scroll down)
                     if (rand.Next(5) == 0)
                     {
-                        System.Windows.Forms.SendKeys.SendWait("{SPACE}");
+                        inputManager.SendSpace();
                         Thread.Sleep(100);
                     }
                     else
@@ -416,7 +380,7 @@ namespace WowBot
                 // 20 % chance of jumping, else use spell (scroll down)
                 if (rand.Next(5) == 0)
                 {
-                    System.Windows.Forms.SendKeys.SendWait("{SPACE}");
+                    inputManager.SendSpace();
                     Thread.Sleep(200);
                 }
                 else
@@ -429,7 +393,7 @@ namespace WowBot
 
                 if (timeInBg < maxActionTime)
                 {
-                    SendKeys("w");
+                    inputManager.SendKeys("w");
                     Thread.Sleep(200);
                 }
 
@@ -440,13 +404,13 @@ namespace WowBot
                 {
                     if (rand.Next(2) == 0)
                     {
-                        SendKeys("t");
+                        inputManager.SendKeys("t");
                         Thread.Sleep(600);
-                        SendKeys("e");
+                        inputManager.SendKeys("e");
                     }
                     else
                     {
-                        SendKeys("4");
+                        inputManager.SendKeys("4");
                         Thread.Sleep(400);
                     }
                 }
@@ -456,16 +420,16 @@ namespace WowBot
                 if (timeInBg < maxActionTime)
                 {
                     // Use R spell
-                    SendKeys("r");
+                    inputManager.SendKeys("r");
                     Thread.Sleep(200);
 
                     // Use 2
                     Thread.Sleep(400);
-                    SendKeys("2");
+                    inputManager.SendKeys("2");
                     Thread.Sleep(580);
 
                     // Use shift-w
-                    SendKeyWithShift(Keys.W);
+                    inputManager.SendKeyWithShift(Keys.W);
                     Thread.Sleep(140);
                 }
 
@@ -480,22 +444,21 @@ namespace WowBot
             int timeInBg = 0;
 
             // Teleport to some place fun
-            SendEnter();
+            inputManager.SendEnter();
             Thread.Sleep(100);
             if (isAlly)
-                SendKeys(".tele " + bgTeleSpotAlly);
+                inputManager.SendKeys(".tele " + bgTeleSpotAlly);
             else
-                SendKeys(".tele " + bgTeleSpotHorde);
+                inputManager.SendKeys(".tele " + bgTeleSpotHorde);
             Thread.Sleep(100);
-            SendEnter();
+            inputManager.SendEnter();
 
             Thread.Sleep(5000);
             // Open PVP window
-            SendKey(Keys.H);
+            inputManager.SendKey(Keys.H);
             Thread.Sleep(1000);
             Cursor.Position = new System.Drawing.Point(bgPress.X, bgPress.Y); // Press Battlegrounds
-            Thread.Sleep(500);
-            MouseClick();
+            inputManager.MouseClick();
 
             // Handle random BG
             if (bg == 100) // Hard coded, 100 means random arena
@@ -579,9 +542,7 @@ namespace WowBot
                 }
             }
 
-            // Click
-            Thread.Sleep(500);
-            MouseClick();
+            inputManager.MouseClick();
 
             Thread.Sleep(1000);
             if (isGroup)
@@ -589,34 +550,29 @@ namespace WowBot
             else
                 Cursor.Position = new System.Drawing.Point(queueJoin.X, queueJoin.Y); // Join queue
 
-            // Click
-            Thread.Sleep(500);
-            MouseClick();
+            inputManager.MouseClick();
 
             Thread.Sleep(3000);
             Cursor.Position = new System.Drawing.Point(queueAccept.X, queueAccept.Y); // Accept queue inv
 
-            // Click
-            Thread.Sleep(500);
-            MouseClick();
+            inputManager.MouseClick();
 
             Thread.Sleep(5000);
-            // Click
-            MouseClick();
+            inputManager.MouseClick();
 
             // Wait for BG to start...
             if (bg == 0)
             {
                 Thread.Sleep(1000);
-                SendKeys("d");
+                inputManager.SendKeys("d");
                 Thread.Sleep(500);
-                SendKeys("d"); // Release the 'd' key
+                inputManager.SendKeys("d"); // Release the 'd' key
                 Thread.Sleep(500);
-                SendKeys("w");
+                inputManager.SendKeys("w");
                 Thread.Sleep(1700);
-                SendKeys("w"); // Release the 'w' key
+                inputManager.SendKeys("w"); // Release the 'w' key
                 Thread.Sleep(1000);
-                SendKeys("a");
+                inputManager.SendKeys("a");
 
                 // Turn slightly in WSG beginning
                 if (isAlly)
@@ -624,11 +580,11 @@ namespace WowBot
                 else
                     Thread.Sleep(WSGTURNTIMERHORDE); // Horde
 
-                SendKeys("a"); // Release the 'a' key
+                inputManager.SendKeys("a"); // Release the 'a' key
                 Thread.Sleep(500);
-                SendKeys("w");
+                inputManager.SendKeys("w");
                 Thread.Sleep(1500);
-                SendKeys("w"); // Release the 'w' key
+                inputManager.SendKeys("w"); // Release the 'w' key
                 Thread.Sleep(46000);
             }
             else
@@ -636,27 +592,27 @@ namespace WowBot
                 for (int i = 0; i < 5; i++)
                 {
                     Thread.Sleep(9000);
-                    SendKeys("w");
+                    inputManager.SendKeys("w");
                     Thread.Sleep(1000);
-                    SendKeys("w"); // Release the 'w' key
+                    inputManager.SendKeys("w"); // Release the 'w' key
 
                     // Turn slightly in AV beginning
                     if (bg == 2 && i == 0)
                     {
                         Thread.Sleep(100);
-                        SendKeys("a");
+                        inputManager.SendKeys("a");
                         Thread.Sleep(100);
-                        SendKeys("a"); // Release the 'a' key
+                        inputManager.SendKeys("a"); // Release the 'a' key
                     }
                     else if (bg == 2 && i == 4)
                     {
                         Thread.Sleep(100);
-                        SendKeys("d");
+                        inputManager.SendKeys("d");
                         if (isAlly)
                             Thread.Sleep(AVTURNTIMERALLY);
                         else
                             Thread.Sleep(AVTURNTIMERHORDE);
-                        SendKeys("d"); // Release the 'd' key
+                        inputManager.SendKeys("d"); // Release the 'd' key
                     }
                 }
             }
@@ -665,22 +621,22 @@ namespace WowBot
             for (int i = 0; i < 100 && timeInBg < bgTimer; i++)
             {
                 Thread.Sleep(2000);
-                SendKeys("w");
+                inputManager.SendKeys("w");
                 Thread.Sleep(100);
-                SendKeys("w"); // Release the 'w' key
+                inputManager.SendKeys("w"); // Release the 'w' key
                 Thread.Sleep(100);
 
                 // Auto run
                 Thread.Sleep(500);
-                SendKeys("%x"); // % represents the ALT key
+                inputManager.SendKeys("%x"); // % represents the ALT key
                 Thread.Sleep(9000);
-                SendKeys("t");
+                inputManager.SendKeys("t");
                 Thread.Sleep(500);
 
                 // 20 % chance of jumping, else use spell (scroll down)
                 if (rand.Next(4) == 0)
                 {
-                    SendKeys("{SPACE}");
+                    inputManager.SendKeys("{SPACE}");
                     Thread.Sleep(500);
                 }
                 else
@@ -689,7 +645,7 @@ namespace WowBot
                 }
 
                 Thread.Sleep(1500);
-                SendKeys("w");
+                inputManager.SendKeys("w");
                 Thread.Sleep(200);
 
                 // 50 % chance of turning left / right
@@ -697,34 +653,34 @@ namespace WowBot
                 {
                     if (rand.Next(2) == 0)
                     {
-                        SendKeys("a");
+                        inputManager.SendKeys("a");
                         Thread.Sleep(500);
                         if (rand.Next(2) == 0)
                         {
                             Thread.Sleep(100);
-                            SendKeys("a");
+                            inputManager.SendKeys("a");
                             Thread.Sleep(300);
                         }
                         else
                         {
                             Thread.Sleep(100);
-                            SendKeys("2");
+                            inputManager.SendKeys("2");
                         }
                     }
                     else
                     {
-                        SendKeys("d");
+                        inputManager.SendKeys("d");
                         Thread.Sleep(500);
                         if (rand.Next(2) == 0)
                         {
                             Thread.Sleep(100);
-                            SendKeys("d");
+                            inputManager.SendKeys("d");
                             Thread.Sleep(300);
                         }
                         else
                         {
                             Thread.Sleep(100);
-                            SendKeys("4");
+                            inputManager.SendKeys("4");
                         }
                     }
                 }
@@ -735,98 +691,34 @@ namespace WowBot
                     // First try to accept ress from someone, then try to release
                     Thread.Sleep(500);
                     Cursor.Position = new System.Drawing.Point(queueAccept.X, queueAccept.Y);
-                    Thread.Sleep(500);
-                    MouseClick(); // Click
-                    Thread.Sleep(500);
+                    inputManager.MouseClick();
                     Cursor.Position = new System.Drawing.Point(acceptRess.X, acceptRess.Y);
-                    Thread.Sleep(500);
-                    MouseClick(); // Click
+                    inputManager.MouseClick();
+
                     // Try clicking a bit further down as well since
                     // release button can be moved down if bot 
                     // ressed player but it expired before getting accepted
-                    Thread.Sleep(500);
                     Cursor.Position = new System.Drawing.Point(acceptRess.X, acceptRess.Y+50);
-                    Thread.Sleep(500);
-                    MouseClick(); // Click
+                    inputManager.MouseClick();
 
                     // Wait 30 sec
                     Thread.Sleep(12000);
-                    SendKeys("w");
-                    Thread.Sleep(150);
-                    Thread.Sleep(14500);
+                    inputManager.SendKeys("w");
+                    Thread.Sleep(14800);
                     timeInBg += 30;
 
                     // Also use shift-w
-                    SendKeys("+w"); // + represents the SHIFT key
-                    Thread.Sleep(140);
+                    //inputManager.SendKeys("+w"); // + represents the SHIFT key
+                    inputManager.SendKeyWithShift(Keys.W);
                 }
                 timeInBg += 14;
 
                 // Use R spell
-                SendKeys("r");
+                inputManager.SendKeys("r");
                 Thread.Sleep(200);
             }
             if (bg == 2)
                 Console.WriteLine($"End of AV loop... timeInBg: {timeInBg}");
         }
-
-        void SendTab()
-        {
-            System.Windows.Forms.SendKeys.SendWait("{TAB}");
-        }
-
-        void SendEnter()
-        {
-            System.Windows.Forms.SendKeys.SendWait("{ENTER}");
-        }
-
-        void SendKey(Keys key)
-        {
-            System.Windows.Forms.SendKeys.SendWait(key.ToString());
-        }
-
-        void SendKeys(string input)
-        {
-            foreach (char c in input)
-            {
-                System.Windows.Forms.SendKeys.SendWait(c.ToString());
-                Thread.Sleep(200);
-            }
-        }
-
-        void SendKeyWithControl(Keys key)
-        {
-            System.Windows.Forms.SendKeys.SendWait("^" + key.ToString());
-        }
-
-        void SendKeyWithShift(Keys key)
-        {
-            System.Windows.Forms.SendKeys.SendWait("+" + key.ToString());
-        }
-
-        void MouseClick()
-        {
-            MouseButtons button = MouseButtons.Left;
-            int x = Cursor.Position.X;
-            int y = Cursor.Position.Y;
-            mouse_event((int)(MouseEventFlags.LEFTDOWN), x, y, 0, 0);
-            mouse_event((int)(MouseEventFlags.LEFTUP), x, y, 0, 0);
-        }
-
-        [Flags]
-        public enum MouseEventFlags
-        {
-            LEFTDOWN = 0x00000002,
-            LEFTUP = 0x00000004,
-            MIDDLEDOWN = 0x00000020,
-            MIDDLEUP = 0x00000040,
-            MOVE = 0x00000001,
-            ABSOLUTE = 0x00008000,
-            RIGHTDOWN = 0x00000008,
-            RIGHTUP = 0x00000010
-        }
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
     }
 }

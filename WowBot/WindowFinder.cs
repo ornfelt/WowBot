@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace WowBot
 {
-    internal class WindowFinder
+    internal static class WindowFinder
     {
         // Importing the required methods from User32.dll
         [DllImport("user32.dll", SetLastError = true)]
@@ -34,7 +35,7 @@ namespace WowBot
             SW_MAX = 11
         }
 
-        public void ShowWindow(string programName)
+        public static void ShowWindow(string programName)
         {
             // Find the window handle by window/program title
             IntPtr hWnd = FindWindow(null, programName);
@@ -47,6 +48,25 @@ namespace WowBot
             }
             else
                 Console.WriteLine("Window not found!");
+        }
+
+        // For finding current window
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        public static string GetCurrentWindow()
+        {
+            IntPtr hWnd = GetForegroundWindow();
+            if (hWnd != IntPtr.Zero)
+            {
+                StringBuilder title = new StringBuilder(256);
+                GetWindowText(hWnd, title, title.Capacity + 1);
+                return title.ToString();
+            }
+            return "";
         }
     }
 }
