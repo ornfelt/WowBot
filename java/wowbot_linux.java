@@ -7,6 +7,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.net.Socket;
+import java.net.InetSocketAddress;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -77,6 +79,8 @@ public class wowbot {
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
 	// The order of the BGs might change depending on current Call to Arms
 	private Map<Object, Object> bgOrderMap;
+
+	wowtabfinder windowFinder;
 	
 	public wowbot() {
 		rand = new Random();
@@ -86,11 +90,32 @@ public class wowbot {
 			e.printStackTrace();
 		}
 		
-		String myString = "DONE";
-		StringSelection stringSelection = new StringSelection(myString);
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		clipboard.setContents(stringSelection, null);
+		windowFinder = new wowtabfinder();
+		System.out.println("Current window: " + windowFinder.GetCurrentWindow());
+
+		//String myString = "DONE";
+		//StringSelection stringSelection = new StringSelection(myString);
+		//Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		//clipboard.setContents(stringSelection, null);
 	}
+	
+	void setServer() {
+		// Maybe set isAcore here?
+        String server = "127.0.0.1";
+        int port = 8085;
+        System.out.println("Server online: " + testRealm(server, port));
+	}
+	
+    private static boolean testRealm(String server, int port) {
+        Socket socket = new Socket();
+        try {
+            socket.connect(new InetSocketAddress(server, port), 500); // 500ms timeout
+            socket.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 	
 	void setCTA() {
 		// Calculate current call to arms
@@ -245,13 +270,7 @@ public class wowbot {
 		sendKey(KeyEvent.VK_ENTER);
 		r.delay(1000);
 		// Ctrl-a to mark all text 
-		r.keyPress(KeyEvent.VK_CONTROL);
-		r.delay(60);
-		r.keyPress(KeyEvent.VK_A);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_CONTROL);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_A);
+		sendKeyWithCtrl(KeyEvent.VK_A);
 		r.delay(500);
 		sendKeys(isAcore ? "acore" : "tcore");
 		r.delay(200);
@@ -277,6 +296,7 @@ public class wowbot {
 		while (true) {
 			// Check game and player status
 			threadSleep(3000);
+			setServer();
 			setCTA();
 			setPlayerSettings();
 			// 5s thread sleep delay
@@ -285,33 +305,33 @@ public class wowbot {
 			switch(bgInput) {
 			case "0":
 				System.out.println("Starting WSG bot! isAlly: " + isAlly);
-				startBgBot(0, WSGTIMER, isAlly, isLowLevel); // WSG
+				startBgBot(0); // WSG
 				break;
 			case "1":
 				System.out.println("Starting AB bot! isAlly: " + isAlly);
-				startBgBot(1, ABTIMER, isAlly, isLowLevel); // AB
+				startBgBot(1); // AB
 				break;
 			case "2":
 				System.out.println("Starting AV bot! isAlly: " + isAlly);
-				startBgBot(2, AVTIMER, isAlly, isLowLevel); // AV
+				startBgBot(2); // AV
 				break;
 			case "ra":
 				if (bgCount < bgCountMax && isArena) {
 					System.out.println("Starting arena bot! isAlly: " + isAlly);
-					startArenaBot(100, 250, isAlly); // Random arena
+					startArenaBot(100); // Random arena
 				} else if (bgCount < (bgCountMax/2) && !isArena) {
 					System.out.println("Starting random BG bot! isAlly: " + isAlly);
-					startBgBot(100, 0, isAlly, isLowLevel); // Random BGs
+					startBgBot(100); // Random BGs
 				} else {
 					// This means bgCountMax has been reached
 					if (isArena) {
 						System.out.println("Switching to playing BGs");
 						System.out.println("Starting random BG bot! isAlly: " + isAlly);
-						startBgBot(100, 0, isAlly, isLowLevel); // Random BGs
+						startBgBot(100); // Random BGs
 					} else {
 						System.out.println("Switching to playing arenas");
 						System.out.println("Starting arena bot! isAlly: " + isAlly);
-						startArenaBot(100, 250, isAlly); // Random arena
+						startArenaBot(100); // Random arena
 					}
 					bgCount = 0;
 					isArena = !isArena;
@@ -320,23 +340,26 @@ public class wowbot {
 				break;
 			case "r":
 				System.out.println("Starting random BG bot! isAlly: " + isAlly);
-				startBgBot(100, 0, isAlly, isLowLevel); // Random BGs
+				startBgBot(100); // Random BGs
 				break;
 			case "a": default: 
 				System.out.println("Starting arena bot! isAlly: " + isAlly);
-				//startArenaBot(0, 250, isAlly); // 2v2
-				//startArenaBot(1, 250, isAlly); // 3v3
-				//startArenaBot(2, 250, isAlly); // 5v5
-				startArenaBot(100, 250, isAlly); // Random arena
+				//startArenaBot(0); // 2v2
+				//startArenaBot(1); // 3v3
+				//startArenaBot(2); // 5v5
+				startArenaBot(100); // Random arena
 				break;
 			}
 		}
 	}
 
 	// Start Arena BOT
-	void startArenaBot(int arenaId, int bgTimer, boolean isAlly) {
+	void startArenaBot(int arenaId) {
+		// Settings
 		int timeInBg = 0;
 		int maxActionTime = 45;
+		int bgTimer = 300;
+
 		r.delay(1000);
 		// Teleport to arena NPC
 		sendKey(KeyEvent.VK_ENTER);
@@ -352,13 +375,7 @@ public class wowbot {
 		sendKey(KeyEvent.VK_ENTER);
 		// Enter '/' manually for Linux
 		r.delay(200);
-		r.keyPress(KeyEvent.VK_SHIFT);
-		r.delay(60);
-		r.keyPress(KeyEvent.VK_7);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_7);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_SHIFT);
+		sendKeyWithShift(KeyEvent.VK_7);
 		r.delay(60);
 		if (isAlly)
 			sendKeys("target beka");
@@ -373,58 +390,37 @@ public class wowbot {
 			arenaId = rand.nextInt(3);
 		
 		System.out.println("Playing arena: " + arenaId);
-		
-		if (arenaId == 2) // Extend bgTimer slightly for 5v5
-			bgTimer += 50;
 
 		if (arenaId == 0)
-			r.mouseMove(arena2v2.x, arena2v2.y); // 2v2
+			mousemove(arena2v2.x, arena2v2.y); // 2v2
 		else if (arenaId == 1)
-			r.mouseMove(arena3v3.x, arena3v3.y); // 3v3
+			mousemove(arena3v3.x, arena3v3.y); // 3v3
 		else
-			r.mouseMove(arena5v5.x, arena5v5.y); // 5v5
+			mousemove(arena5v5.x, arena5v5.y); // 5v5
 
-		// Click
-		r.delay(700);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-
+		click();
 		r.delay(1000);
-		r.mouseMove(queueJoin.x, queueJoin.y); // Join queue
-		// Click
-		r.delay(500);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		mousemove(queueJoin.x, queueJoin.y); // Join queue
+		click();
 		
 		r.delay(3000);
-		r.mouseMove(queueAccept.x, queueAccept.y); // Accept queue inv
-		// Click
-		r.delay(500);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
+		click();
 
 		r.delay(5000);
-		// Click
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		click();
 
 		// Wait for arena to start...
 		for (int i = 0; i < 5; i++) {
 			r.delay(9000);
-			if (i == 0) {
-				r.keyPress(KeyEvent.VK_W);
-				r.delay(1000);
-				r.keyRelease(KeyEvent.VK_W);
-			} else if (i == 1) {
-				r.keyPress(KeyEvent.VK_D);
-				r.delay(350);
-				r.keyRelease(KeyEvent.VK_D);
-			} else {
+			if (i == 0)
+				sendKey(KeyEvent.VK_W, 1000);
+			else if (i == 1)
+				sendKey(KeyEvent.VK_D, 350);
+			else {
 				// 20 % chance of jumping, else use spell (scroll down)
 				if (rand.nextInt(4) == 0) {
-					r.keyPress(KeyEvent.VK_SPACE);
-					r.delay(100);
-					r.keyRelease(KeyEvent.VK_SPACE);
+					sendKey(KeyEvent.VK_SPACE);
 				} else
 					r.mouseWheel(1);
 				}
@@ -435,65 +431,39 @@ public class wowbot {
 			r.delay(5000); // 5s delay
 
 			// 20 % chance of jumping, else use spell (scroll down)
-			if (rand.nextInt(4) == 0) {
-				r.keyPress(KeyEvent.VK_SPACE);
-				r.delay(200);
-				r.keyRelease(KeyEvent.VK_SPACE);
-			} else
+			if (rand.nextInt(4) == 0)
+				sendKey(KeyEvent.VK_SPACE);
+			else
 				r.mouseWheel(1);
 
 			r.delay(1500); // 1.5s delay
 
-			if (timeInBg < maxActionTime) {
-				r.keyPress(KeyEvent.VK_W);
-				r.delay(100);
-				r.keyRelease(KeyEvent.VK_W);
-				r.delay(100);
-			}
+			if (timeInBg < maxActionTime)
+				sendKey(KeyEvent.VK_W);
 
 			r.delay(1500);
 			// Use E or 4 spell
 			if (timeInBg < maxActionTime) {
 				if (rand.nextInt(2) == 0) {
-					r.keyPress(KeyEvent.VK_T);
-					r.delay(100);
-					r.keyRelease(KeyEvent.VK_T);
+					sendKey(KeyEvent.VK_T);
 					r.delay(500);
-					r.keyPress(KeyEvent.VK_E);
-					r.delay(100);
-					r.keyRelease(KeyEvent.VK_E);
-					r.delay(100);
+					sendKey(KeyEvent.VK_E);
 				}
-				else {
-					r.keyPress(KeyEvent.VK_4);
-					r.delay(100);
-					r.keyRelease(KeyEvent.VK_4);
-					r.delay(300);
-				}
+				else
+					sendKey(KeyEvent.VK_4);
+				r.delay(200);
 			}
 
 			r.delay(1000);
 			if (timeInBg < maxActionTime) {
 				// Use R spell
-				r.keyPress(KeyEvent.VK_R);
-				r.delay(100);
-				r.keyRelease(KeyEvent.VK_R);
-				r.delay(100);
+				sendKey(KeyEvent.VK_R);
+				r.delay(500);
 				// Use 2
-				r.delay(400);
-				r.keyPress(KeyEvent.VK_2);
-				r.delay(140);
-				r.keyRelease(KeyEvent.VK_2);
-				r.delay(440);
+				sendKey(KeyEvent.VK_2);
+				r.delay(580);
 				// Use shift-w
-				r.keyPress(KeyEvent.VK_SHIFT);
-				r.delay(35);
-				r.keyPress(KeyEvent.VK_W);
-				r.delay(35);
-				r.keyRelease(KeyEvent.VK_W);
-				r.delay(35);
-				r.keyRelease(KeyEvent.VK_SHIFT);
-				r.delay(35);
+				sendKeyWithShift(KeyEvent.VK_W);
 			}
 
 			timeInBg += 11;
@@ -502,8 +472,16 @@ public class wowbot {
 	}
 	
 	// Start Battleground BOT
-	void startBgBot(int bg, int bgTimer, boolean isAlly, boolean isLowLevel) {
+	void startBgBot(int bg) {
+		// Settings
 		int timeInBg = 0;
+		int bgTimer = 0;
+		if (bg == 0)
+			bgTimer = WSGTIMER;
+		else if (bg == 1)
+			bgTimer = ABTIMER;
+		else
+			bgTimer = AVTIMER;
 
 		// Teleport to some place fun
 		sendKey(KeyEvent.VK_ENTER);
@@ -519,56 +497,46 @@ public class wowbot {
 		// Open PVP window
 		sendKey(KeyEvent.VK_H);
 		r.delay(1000);
-		r.mouseMove(bgPress.x, bgPress.y); // Press Battlegrounds
-		// Click
-		r.delay(500);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		mousemove(bgPress.x, bgPress.y); // Press Battlegrounds
+		click();
 		
 		// Handle random BG
 		if (bg == 100) // Hard coded, 100 means random arena
 			bg = rand.nextInt(3);
 		System.out.println("Playing BG: " + bg);
-		// Set correct bgTimer
-		if (bg == 0)
-			bgTimer = WSGTIMER;
-		else if (bg == 1)
-			bgTimer = ABTIMER;
-		else
-			bgTimer = AVTIMER;
 
 		r.delay(1000);
 		if (bg == 0)
 			switch ((int)bgOrderMap.get(bg)) {
 				case 1:
-					r.mouseMove(bg1.x, bg1.y); // WSG 1
+					mousemove(bg1.x, bg1.y); // WSG 1
 					break;
 				case 2: default:
-					r.mouseMove(bg2.x, bg2.y); // WSG 2
+					mousemove(bg2.x, bg2.y); // WSG 2
 					break;
 			}
 		else if (bg == 1)
 			switch ((int)bgOrderMap.get(bg)) {
 				case 1:
-					r.mouseMove(bg1.x, bg1.y); // AB 1
+					mousemove(bg1.x, bg1.y); // AB 1
 					break;
 				case 2:
-					r.mouseMove(bg2.x, bg2.y); // AB 2
+					mousemove(bg2.x, bg2.y); // AB 2
 					break;
 				case 3: default:
-					r.mouseMove(bg3.x, bg3.y); // AB 3
+					mousemove(bg3.x, bg3.y); // AB 3
 					break;
 			}
 		else
 			switch ((int)bgOrderMap.get(bg)) {
 				case 1:
-					r.mouseMove(bg1.x, bg1.y); // AV 1
+					mousemove(bg1.x, bg1.y); // AV 1
 					break;
 				case 3:
-					r.mouseMove(bg3.x, bg3.y); // AV 3
+					mousemove(bg3.x, bg3.y); // AV 3
 					break;
 				case 4: default:
-					r.mouseMove(bg4.x, bg4.y); // AV 4
+					mousemove(bg4.x, bg4.y); // AV 4
 					break;
 			}
 		
@@ -576,94 +544,64 @@ public class wowbot {
 		if (isLowLevel) {
 			if (otherCTA) {
                 if (bg == 0)
-                    r.mouseMove(bg1.x, bg1.y); // WSG
+                    mousemove(bg1.x, bg1.y); // WSG
                 else if (bg == 1)
-                    r.mouseMove(bg2.x, bg2.y); // AB
+                    mousemove(bg2.x, bg2.y); // AB
                 else
-                    r.mouseMove(bg3.x, bg3.y); // AV
+                    mousemove(bg3.x, bg3.y); // AV
             } else {
                 if (bg == 0)
-                    r.mouseMove(lowLevelWsg.x, lowLevelWsg.y); // WSG
+                    mousemove(lowLevelWsg.x, lowLevelWsg.y); // WSG
                 else if (bg == 1)
-                    r.mouseMove(bg1.x, bg1.y); // AB
+                    mousemove(bg1.x, bg1.y); // AB
                 else
-                    r.mouseMove(bg2.x, bg2.y); // AV
+                    mousemove(bg2.x, bg2.y); // AV
             }
 		}
 
-		// Click
-		r.delay(500);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		click();
 
 		r.delay(1000);
 		if (isGroup)
-			r.mouseMove(queueJoin.x-120, queueJoin.y); // Join group queue
+			mousemove(queueJoin.x-120, queueJoin.y); // Join group queue
 		else
-			r.mouseMove(queueJoin.x, queueJoin.y); // Join queue
-		// Click
-		r.delay(500);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+			mousemove(queueJoin.x, queueJoin.y); // Join queue
+
+		click();
 		
 		r.delay(3000);
-		r.mouseMove(queueAccept.x, queueAccept.y); // Accept queue inv
-		// Click
-		r.delay(500);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
+		click();
 
 		r.delay(5000);
-		// Click
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		click();
 
 		// Wait for BG to start...
 		if (bg == 0) {
 			r.delay(1000);
-			r.keyPress(KeyEvent.VK_D);
+			sendKey(KeyEvent.VK_D, 500);
 			r.delay(500);
-			r.keyRelease(KeyEvent.VK_D);
-			r.delay(500);
-			r.keyPress(KeyEvent.VK_W);
-			r.delay(1700);
-			r.keyRelease(KeyEvent.VK_W);
+			sendKey(KeyEvent.VK_W, 1700);
 			r.delay(1000);
-			r.keyPress(KeyEvent.VK_A);
 
 			// Turn slightly in WSG beginning
-			if (isAlly)
-				r.delay(WSGTURNTIMERALLY); // Ally
-			else
-				r.delay(WSGTURNTIMERHORDE); // Horde
+			sendKey(KeyEvent.VK_A, isAlly ? WSGTURNTIMERALLY : WSGTURNTIMERHORDE);
 
-			r.keyRelease(KeyEvent.VK_A);
 			r.delay(500);
-			r.keyPress(KeyEvent.VK_W);
-			r.delay(1500);
-			r.keyRelease(KeyEvent.VK_W);
+			sendKey(KeyEvent.VK_W, 1500);
 			r.delay(46000);
 		} else {
 			for (int i = 0; i < 5; i++) {
 				r.delay(9000);
-				r.keyPress(KeyEvent.VK_W);
-				r.delay(1000);
-				r.keyRelease(KeyEvent.VK_W);
+				sendKey(KeyEvent.VK_W, 1000);
 
 				// Turn slightly in AV beginning
 				if (bg == 2 && i == 0) {
 					r.delay(100);
-					r.keyPress(KeyEvent.VK_A);
-					r.delay(100);
-					r.keyRelease(KeyEvent.VK_A);
+					sendKey(KeyEvent.VK_A, 100);
 				} else if (bg == 2 && i == 4) {
 					r.delay(100);
-					r.keyPress(KeyEvent.VK_D);
-					if (isAlly)
-						r.delay(AVTURNTIMERALLY);
-					else
-						r.delay(AVTURNTIMERHORDE);
-					r.keyRelease(KeyEvent.VK_D);
+					sendKey(KeyEvent.VK_D, isAlly ? AVTURNTIMERALLY : AVTURNTIMERHORDE);
 				}
 			}
 		}
@@ -671,81 +609,50 @@ public class wowbot {
 		// Random walking and some spell casts
 		for (int i = 0; i < 100 && timeInBg < bgTimer; i++) {
 			r.delay(2000);
-			r.keyPress(KeyEvent.VK_W);
-			r.delay(100);
-			r.keyRelease(KeyEvent.VK_W);
-			r.delay(100);
+			sendKey(KeyEvent.VK_W);
 			
 			// Auto run
 			r.delay(500);
-			r.keyPress(KeyEvent.VK_ALT);
-			r.delay(60);
-			r.keyPress(KeyEvent.VK_X);
-			r.delay(60);
-			r.keyRelease(KeyEvent.VK_X);
-			r.delay(60);
-			r.keyRelease(KeyEvent.VK_ALT);
+			sendKeyWithAlt(KeyEvent.VK_X);
 			
 			r.delay(9000);
-			r.keyPress(KeyEvent.VK_T);
-			r.delay(100);
-			r.keyRelease(KeyEvent.VK_T);
+			sendKey(KeyEvent.VK_T);
 			r.delay(400);
 			// 20 % chance of jumping, else use spell (scroll down)
 			//if (rand.nextInt(10) == 0) // 10 % chance
 			if (rand.nextInt(4) == 0) {
-				r.keyPress(KeyEvent.VK_SPACE);
+				sendKey(KeyEvent.VK_SPACE);
 				r.delay(500);
-				r.keyRelease(KeyEvent.VK_SPACE);
 			} else
 				r.mouseWheel(1);
 
 			r.delay(1500);
-			r.keyPress(KeyEvent.VK_W);
-			r.delay(100);
-			r.keyRelease(KeyEvent.VK_W);
-			r.delay(100);
+			sendKey(KeyEvent.VK_W);
 
 			// 50 % chance of turning left / right
 			// Don't turn in AB / AV until a few minutes have passed 
 			if (bg == 0 || timeInBg > 150) {
 				if (rand.nextInt(2) == 0) {
 					//System.out.println("Turning left");
-					r.keyPress(KeyEvent.VK_A);
-					r.delay(500);
-					r.keyRelease(KeyEvent.VK_A);
+					sendKey(KeyEvent.VK_A, 500);
 					// 50 % chance of turning some more
-					if (rand.nextInt(2) == 0) {
-						r.delay(100);
-						r.keyPress(KeyEvent.VK_A);
-						r.delay(200);
-						r.keyRelease(KeyEvent.VK_A);
-					} else {
+					r.delay(100);
+					if (rand.nextInt(2) == 0)
+						sendKey(KeyEvent.VK_A, 200);
+					else
 						// Else use 2
-						r.delay(100);
-						r.keyPress(KeyEvent.VK_2);
-						r.delay(100);
-						r.keyRelease(KeyEvent.VK_2);
-					}
+						sendKey(KeyEvent.VK_2);
 				}
 				else {
 					//System.out.println("Turning right");
-					r.keyPress(KeyEvent.VK_D);
-					r.delay(500);
-					r.keyRelease(KeyEvent.VK_D);
+					sendKey(KeyEvent.VK_D, 500);
+					r.delay(100);
 					// 50 % chance of turning some more
-					if (rand.nextInt(2) == 0) {
-						r.delay(100);
-						r.keyPress(KeyEvent.VK_D);
-						r.delay(200);
-						r.keyRelease(KeyEvent.VK_D);
-					} else {
+					if (rand.nextInt(2) == 0)
+						sendKey(KeyEvent.VK_D, 200);
+					else
 						// Else use 4
-						r.delay(100);
-						r.keyPress(KeyEvent.VK_4);
-						r.delay(100);
-						r.keyRelease(KeyEvent.VK_4);
-					}
+						sendKey(KeyEvent.VK_4);
 				}
 			}
 			
@@ -754,50 +661,30 @@ public class wowbot {
 				//System.out.println("Trying to release... Loop count: " + i);
 				// First try to accept ress from someone, then try to release
 				r.delay(500);
-				r.mouseMove(queueAccept.x, queueAccept.y);
+				mousemove(queueAccept.x, queueAccept.y);
+				click();
 				r.delay(500);
-				r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-				r.delay(500);
-				r.mouseMove(acceptRess.x, acceptRess.y);
-				r.delay(500);
-				r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+				mousemove(acceptRess.x, acceptRess.y);
+				click();
 				// Try clicking a bit further down as well since
 				// release button can be moved down if bot 
 				// ressed player but it expired before getting accepted
 				r.delay(500);
-				r.mouseMove(acceptRess.x, acceptRess.y+70);
-				r.delay(500);
-				r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+				mousemove(acceptRess.x, acceptRess.y+70);
+				click();
 
 				// Wait 30 sec
 				r.delay(12000);
-				r.keyPress(KeyEvent.VK_W);
-				r.delay(100);
-				r.keyRelease(KeyEvent.VK_W);
-				r.delay(100);
-				r.delay(14500);
+				sendKey(KeyEvent.VK_W);
+				r.delay(15000);
 				timeInBg += 30;
 				// Also use shift-w
-				r.keyPress(KeyEvent.VK_SHIFT);
-				r.delay(35);
-				r.keyPress(KeyEvent.VK_W);
-				r.delay(35);
-				r.keyRelease(KeyEvent.VK_W);
-				r.delay(35);
-				r.keyRelease(KeyEvent.VK_SHIFT);
-				r.delay(35);
+				sendKeyWithShift(KeyEvent.VK_SHIFT);
 			}
 			timeInBg += 14;
 
-			//r.mouseWheel(1);
 			// Use R spell
-			r.keyPress(KeyEvent.VK_R);
-			r.delay(100);
-			r.keyRelease(KeyEvent.VK_R);
-			r.delay(100);
+			sendKey(KeyEvent.VK_R);
 			//System.out.println("End of loop... timeInBg: " + timeInBg + ", bgTimer: " + bgTimer);
 		}
 		if (bg == 2)
@@ -815,11 +702,60 @@ public class wowbot {
 	
 	// Execute specific key
 	void sendKey(int key) {
-		r.delay(100);
+		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
+			return;
 		r.keyPress(key);
-		r.delay(100);
+		r.delay(60);
 		r.keyRelease(key);
-		r.delay(100);
+		r.delay(60);
+	}
+
+	void sendKey(int key, int delay) {
+		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
+			return;
+		r.keyPress(key);
+		r.delay(delay);
+		r.keyRelease(key);
+		r.delay(60);
+	}
+
+	void sendKeyWithShift(int key) {
+		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
+			return;
+		r.keyPress(KeyEvent.VK_SHIFT);
+		r.delay(30);
+		r.keyPress(key);
+		r.delay(30);
+		r.keyRelease(KeyEvent.VK_SHIFT);
+		r.delay(30);
+		r.keyRelease(key);
+		r.delay(30);
+	}
+
+	void sendKeyWithCtrl(int key) {
+		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
+			return;
+		r.keyPress(KeyEvent.VK_CONTROL);
+		r.delay(30);
+		r.keyPress(key);
+		r.delay(30);
+		r.keyRelease(KeyEvent.VK_CONTROL);
+		r.delay(30);
+		r.keyRelease(key);
+		r.delay(30);
+	}
+
+	void sendKeyWithAlt(int key) {
+		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
+			return;
+		r.keyPress(KeyEvent.VK_ALT);
+		r.delay(30);
+		r.keyPress(key);
+		r.delay(30);
+		r.keyRelease(KeyEvent.VK_ALT);
+		r.delay(30);
+		r.keyRelease(key);
+		r.delay(30);
 	}
 	
 	// Execute the characters in string key 
@@ -942,46 +878,27 @@ public class wowbot {
 	        default: return -1;
 	    }
 	}
-	
-	// Click on the screen with Robot 
-	void click(int x, int y) throws AWTException{
+
+	void mousemove(int x, int y) {
+		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
+			return;
 		r.mouseMove(x, y);    
+	}
+
+	// Click on the screen with Robot 
+	void click() {
+		r.delay(500);
 		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 	}
 
-	//mark and drag on the screen with Robot 
+	// Select and copy with Robot
 	void selectAndCopy(int x, int y) throws AWTException{
-		/*
-		r.mouseMove(x, y);    
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 		r.mouseMove(x, y);
-		r.delay(200);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-		//r.keyPress(KeyEvent.CTRL_DOWN_MASK);
-
-		r.keyPress(KeyEvent.VK_CONTROL);
-		r.delay(60);
-		r.keyPress(KeyEvent.VK_C);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_CONTROL);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_C);
-		*/
-		r.mouseMove(x, y);
-		// first click
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-		// second click
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+		// Double click
+		click();
+		click();
 		r.delay(100);
-		r.keyPress(KeyEvent.VK_CONTROL);
-		r.delay(60);
-		r.keyPress(KeyEvent.VK_C);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_CONTROL);
-		r.delay(60);
-		r.keyRelease(KeyEvent.VK_C);
+		sendKeyWithCtrl(KeyEvent.VK_C);
 	}
 }
