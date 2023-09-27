@@ -24,18 +24,18 @@ namespace WowBot
         DateTime now;
 
         // Configuration
-        private MousePos arena2v2 = new MousePos(240, 408);
-        private MousePos arena3v3 = new MousePos(240, 420);
-        private MousePos arena5v5 = new MousePos(240, 440);
-        private MousePos queueJoin = new MousePos(290, 662);
-        private MousePos queueAccept = new MousePos(850, 265);
-        private MousePos bgPress = new MousePos(180, 695);
-        private MousePos bg1 = new MousePos(240, 290);
-        private MousePos bg2 = new MousePos(240, 308);
-        private MousePos bg3 = new MousePos(240, 330);
-        private MousePos bg4 = new MousePos(240, 340);
-        private MousePos lowLevelWsg = new MousePos(240, 270);
-        private MousePos acceptRess = new MousePos(900, 265);
+        private MousePos arena2v2 = new MousePos(240, 320);
+        private MousePos arena3v3 = new MousePos(240, 335);
+        private MousePos arena5v5 = new MousePos(240, 350);
+        private MousePos queueJoin = new MousePos(300, 500);
+        private MousePos queueAccept = new MousePos(680, 225);
+        private MousePos bgPress = new MousePos(210, 525);
+        private MousePos bg1 = new MousePos(240, 235);
+        private MousePos bg2 = new MousePos(240, 250);
+        private MousePos bg3 = new MousePos(240, 265);
+        private MousePos bg4 = new MousePos(240, 280);
+        private MousePos lowLevelWsg = new MousePos(240, 220);
+        private MousePos acceptRess = new MousePos(680, 265);
 
         // Timers
         private const int WSGTIMER = 1900;
@@ -48,7 +48,7 @@ namespace WowBot
 
         // Queue settings
         private readonly bool isAcore = true; // AzerothCore / TrinityCore
-        private static bool isArena = false; // Start with BG when random
+        private static bool isArena = true; // Start with BG when random
         private static bool isGroup = false; // If group queue (BG only)
         private static bool isLowLevel = false; // If low level (special ordering of BGs)
         private static bool otherCTA = false; // If other BG than WSG, AB, AV is call to arms 
@@ -157,9 +157,9 @@ namespace WowBot
                 // Uncomment if needed
                 // MySqlClientFactory.Instance.CreateConnection();
                 if (isAcore)
-                    connection = new MySqlConnection( "Server=localhost;Database=acore_characters;User ID=acore;Password=acore;");
+                    connection = new MySqlConnection("Server=localhost;Database=acore_characters;User ID=acore;Password=acore;");
                 else
-                    connection = new MySqlConnection( "Server=localhost;Database=characters;User ID=trinity;Password=trinity;");
+                    connection = new MySqlConnection("Server=localhost;Database=characters;User ID=trinity;Password=trinity;");
                 connection.Open();
 
                 int accountId = 1;
@@ -296,20 +296,18 @@ namespace WowBot
                 inputManager.SendKeys(".go creature 4762"); // select guid from creature where id1=19912; (id from arena npc from wowhead)
             inputManager.SendEnter();
 
-            Thread.Sleep(5000);
+            Thread.Sleep(7000);
             // /target arena char and interact with him
             inputManager.SendEnter();
-            // Enter '/' manually for Linux
             Thread.Sleep(200);
-            inputManager.SendKeyWithShift(Keys.D7);
             if (isAlly)
-                inputManager.SendKeys("target beka");
+                inputManager.SendKeys("/target beka");
             else
-                inputManager.SendKeys("target zeggon");
+                inputManager.SendKeys("/target zeggon");
             inputManager.SendEnter();
             Thread.Sleep(700);
             inputManager.SendKey(Keys.D9);
-            Thread.Sleep(1300);
+            Thread.Sleep(2000);
 
             if (arenaId == 100) // Hard coded, 100 means random arena
                 arenaId = new Random().Next(3);
@@ -319,15 +317,20 @@ namespace WowBot
             if (arenaId == 2) // Extend bgTimer slightly for 5v5
                 bgTimer += 50;
 
-            Point targetPoint;
             if (arenaId == 0)
-                targetPoint = new Point(arena2v2.X, arena2v2.Y); // 2v2
+                Cursor.Position = new Point(arena2v2.X, arena2v2.Y); // 2v2
             else if (arenaId == 1)
-                targetPoint = new Point(arena3v3.X, arena3v3.Y); // 3v3
+                Cursor.Position = new Point(arena3v3.X, arena3v3.Y); // 3v3
             else
-                targetPoint = new Point(arena5v5.X, arena5v5.Y); // 5v5
+                Cursor.Position = new Point(arena5v5.X, arena5v5.Y); // 5v5
 
-            Cursor.Position = targetPoint;
+            Thread.Sleep(2000);
+            Cursor.Position = new Point(arena2v2.X, arena2v2.Y); // 2v2
+            Thread.Sleep(2000);
+            Cursor.Position = new Point(arena3v3.X, arena3v3.Y); // 3v3
+            Thread.Sleep(2000);
+            Cursor.Position = new Point(arena5v5.X, arena5v5.Y); // 5v5
+
             inputManager.MouseClick();
 
             Thread.Sleep(1000);

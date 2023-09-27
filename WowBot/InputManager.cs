@@ -47,7 +47,12 @@ namespace WowBot
 
         internal void SendSpace()
         {
-            System.Windows.Forms.SendKeys.SendWait("{SPACE}");
+            System.Windows.Forms.SendKeys.SendWait(" ");
+        }
+
+        internal void SendEscape()
+        {
+            System.Windows.Forms.SendKeys.SendWait("{CAPSLOCK}");
         }
 
         internal void SendLogin(bool isAcore, bool isDC)
@@ -67,9 +72,9 @@ namespace WowBot
             SendKeys("123");
             Thread.Sleep(200);
             SendEnter();
-            Thread.Sleep(6000);
+            Thread.Sleep(9000);
             SendEnter();
-            Thread.Sleep(6000);
+            Thread.Sleep(9000);
             SendEnter();
             Thread.Sleep(300);
             SendEnter();
