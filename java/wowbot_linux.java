@@ -2,10 +2,6 @@ package wowbot;
 
 import java.awt.AWTException;
 import java.awt.Robot;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.net.Socket;
 import java.net.InetSocketAddress;
@@ -31,6 +27,7 @@ public class wowbot {
 	
 	/* Variables needed for Robot */
 	private Robot r;
+	private InputManager inputManager;
 	Random rand;
 	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yy/MM/dd");
 	LocalDateTime now;
@@ -42,7 +39,7 @@ public class wowbot {
 	private MousePos queueJoin = new MousePos(290, 662);
 	private MousePos queueAccept = new MousePos(850, 265);
 	private MousePos bgPress = new MousePos(180, 695);
-	private MousePos bg1 = new MousePos(240, 290);
+	private MousePos bg1 = new MousePos(240, 285);
 	private MousePos bg2 = new MousePos(240, 308);
 	private MousePos bg3 = new MousePos(240, 330);
 	private MousePos bg4 = new MousePos(240, 340);
@@ -79,8 +76,6 @@ public class wowbot {
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
 	// The order of the BGs might change depending on current Call to Arms
 	private Map<Object, Object> bgOrderMap;
-
-	wowtabfinder windowFinder;
 	
 	public wowbot() {
 		rand = new Random();
@@ -89,10 +84,8 @@ public class wowbot {
 		} catch (AWTException e) {
 			e.printStackTrace();
 		}
+		inputManager = new InputManager(r);
 		
-		windowFinder = new wowtabfinder();
-		System.out.println("Current window: " + windowFinder.GetCurrentWindow());
-
 		//String myString = "DONE";
 		//StringSelection stringSelection = new StringSelection(myString);
 		//Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -235,7 +228,7 @@ public class wowbot {
 				if (!resultSet.next()) {
 					System.out.println("Player still not logged in. Trying to log in once more...");
                     r.delay(1000);
-                    sendKey(KeyEvent.VK_ENTER);
+                    inputManager.sendKey(KeyEvent.VK_ENTER);
 					tryLogin();
 					// Execute SQL again
 					resultSet = statement.executeQuery("select name, race, level from characters where online = 1 and account = " + accountId);
@@ -267,32 +260,28 @@ public class wowbot {
 	void tryLogin() {
 		threadSleep(2000);
 		// Press enter to get rid of DC message
-		sendKey(KeyEvent.VK_ENTER);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(1000);
 		// Ctrl-a to mark all text 
-		sendKeyWithCtrl(KeyEvent.VK_A);
+		inputManager.sendKeyWithCtrl(KeyEvent.VK_A);
 		r.delay(500);
-		sendKeys(isAcore ? "acore" : "tcore");
+		inputManager.sendKeys(isAcore ? "acore" : "tcore");
 		r.delay(200);
-		sendKey(KeyEvent.VK_TAB);
+		inputManager.sendKey(KeyEvent.VK_TAB);
 		r.delay(200);
-		sendKeys("123");
+		inputManager.sendKeys("123");
 		r.delay(200);
-		sendKey(KeyEvent.VK_ENTER);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(5000);
-		sendKey(KeyEvent.VK_ENTER);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(5000);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
+		r.delay(200);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 	}
 	
 	// Start BOT
-	void startBot(String bgInputArg, String factionInputArg) {
-		if (!bgInputArg.equals(""))
-			bgInput = bgInputArg;
-		//if (!factionInputArg.equals(""))
-			//factionInput = factionInputArg;
-		//System.out.println("Args: " + bgInput + ", " + factionInputArg);
-		//boolean isAlly = factionInput.toLowerCase().equals("ally");
-		
+	void startBot() {
 		while (true) {
 			// Check game and player status
 			threadSleep(3000);
@@ -362,28 +351,28 @@ public class wowbot {
 
 		r.delay(1000);
 		// Teleport to arena NPC
-		sendKey(KeyEvent.VK_ENTER);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(200);
 		if (isAlly)
-			sendKeys(".go creature 68938"); // select guid from creature where id1=19911; (id from arena npc from wowhead)
+			inputManager.sendKeys(".go creature 68938"); // select guid from creature where id1=19911; (id from arena npc from wowhead)
 		else
-			sendKeys(".go creature 4762"); // select guid from creature where id1=19912; (id from arena npc from wowhead)
-		sendKey(KeyEvent.VK_ENTER);
+			inputManager.sendKeys(".go creature 4762"); // select guid from creature where id1=19912; (id from arena npc from wowhead)
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 
 		r.delay(5000);
 		// /target arena char and interact with him
-		sendKey(KeyEvent.VK_ENTER);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 		// Enter '/' manually for Linux
 		r.delay(200);
-		sendKeyWithShift(KeyEvent.VK_7);
+		inputManager.sendKeyWithShift(KeyEvent.VK_7);
 		r.delay(60);
 		if (isAlly)
-			sendKeys("target beka");
+			inputManager.sendKeys("target beka");
 		else
-			sendKeys("target zeggon");
-		sendKey(KeyEvent.VK_ENTER);
+			inputManager.sendKeys("target zeggon");
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(700);
-		sendKey(KeyEvent.VK_9);
+		inputManager.sendKey(KeyEvent.VK_9);
 		r.delay(1300);
 
 		if (arenaId == 100) // Hard coded, 100 means random arena
@@ -392,38 +381,38 @@ public class wowbot {
 		System.out.println("Playing arena: " + arenaId);
 
 		if (arenaId == 0)
-			mousemove(arena2v2.x, arena2v2.y); // 2v2
+			inputManager.mousemove(arena2v2.x, arena2v2.y); // 2v2
 		else if (arenaId == 1)
-			mousemove(arena3v3.x, arena3v3.y); // 3v3
+			inputManager.mousemove(arena3v3.x, arena3v3.y); // 3v3
 		else
-			mousemove(arena5v5.x, arena5v5.y); // 5v5
+			inputManager.mousemove(arena5v5.x, arena5v5.y); // 5v5
 
-		click();
+		inputManager.click();
 		r.delay(1000);
-		mousemove(queueJoin.x, queueJoin.y); // Join queue
-		click();
+		inputManager.mousemove(queueJoin.x, queueJoin.y); // Join queue
+		inputManager.click();
 		
 		r.delay(3000);
-		mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
-		click();
+		inputManager.mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
+		inputManager.click();
 
 		r.delay(5000);
-		click();
+		inputManager.click();
 
 		// Wait for arena to start...
 		for (int i = 0; i < 5; i++) {
 			r.delay(9000);
 			if (i == 0)
-				sendKey(KeyEvent.VK_W, 1000);
+				inputManager.sendKey(KeyEvent.VK_W, 1000);
 			else if (i == 1)
-				sendKey(KeyEvent.VK_D, 350);
+				inputManager.sendKey(KeyEvent.VK_D, 350);
 			else {
 				// 20 % chance of jumping, else use spell (scroll down)
-				if (rand.nextInt(4) == 0) {
-					sendKey(KeyEvent.VK_SPACE);
-				} else
-					r.mouseWheel(1);
-				}
+				if (rand.nextInt(4) == 0)
+					inputManager.sendKey(KeyEvent.VK_SPACE);
+				else
+					inputManager.mousescroll(i);
+			}
 		}
 		
 		// Random spell casting
@@ -432,38 +421,38 @@ public class wowbot {
 
 			// 20 % chance of jumping, else use spell (scroll down)
 			if (rand.nextInt(4) == 0)
-				sendKey(KeyEvent.VK_SPACE);
+				inputManager.sendKey(KeyEvent.VK_SPACE);
 			else
-				r.mouseWheel(1);
+				inputManager.mousescroll(i);
 
 			r.delay(1500); // 1.5s delay
 
 			if (timeInBg < maxActionTime)
-				sendKey(KeyEvent.VK_W);
+				inputManager.sendKey(KeyEvent.VK_W);
 
 			r.delay(1500);
 			// Use E or 4 spell
 			if (timeInBg < maxActionTime) {
 				if (rand.nextInt(2) == 0) {
-					sendKey(KeyEvent.VK_T);
+					inputManager.sendKey(KeyEvent.VK_T);
 					r.delay(500);
-					sendKey(KeyEvent.VK_E);
+					inputManager.sendKey(KeyEvent.VK_E);
 				}
 				else
-					sendKey(KeyEvent.VK_4);
+					inputManager.sendKey(KeyEvent.VK_4);
 				r.delay(200);
 			}
 
 			r.delay(1000);
 			if (timeInBg < maxActionTime) {
 				// Use R spell
-				sendKey(KeyEvent.VK_R);
+				inputManager.sendKey(KeyEvent.VK_R);
 				r.delay(500);
 				// Use 2
-				sendKey(KeyEvent.VK_2);
+				inputManager.sendKey(KeyEvent.VK_2);
 				r.delay(580);
 				// Use shift-w
-				sendKeyWithShift(KeyEvent.VK_W);
+				inputManager.sendKeyWithShift(KeyEvent.VK_W);
 			}
 
 			timeInBg += 11;
@@ -484,21 +473,21 @@ public class wowbot {
 			bgTimer = AVTIMER;
 
 		// Teleport to some place fun
-		sendKey(KeyEvent.VK_ENTER);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(100);
 		if (isAlly)
-			sendKeys(".tele " + bgTeleSpotAlly);
+			inputManager.sendKeys(".tele " + bgTeleSpotAlly);
 		else
-			sendKeys(".tele " + bgTeleSpotHorde);
+			inputManager.sendKeys(".tele " + bgTeleSpotHorde);
 		r.delay(100);
-		sendKey(KeyEvent.VK_ENTER);
+		inputManager.sendKey(KeyEvent.VK_ENTER);
 
 		r.delay(5000);
 		// Open PVP window
-		sendKey(KeyEvent.VK_H);
+		inputManager.sendKey(KeyEvent.VK_H);
 		r.delay(1000);
-		mousemove(bgPress.x, bgPress.y); // Press Battlegrounds
-		click();
+		inputManager.mousemove(bgPress.x, bgPress.y); // Press Battlegrounds
+		inputManager.click();
 		
 		// Handle random BG
 		if (bg == 100) // Hard coded, 100 means random arena
@@ -509,34 +498,34 @@ public class wowbot {
 		if (bg == 0)
 			switch ((int)bgOrderMap.get(bg)) {
 				case 1:
-					mousemove(bg1.x, bg1.y); // WSG 1
+					inputManager.mousemove(bg1.x, bg1.y); // WSG 1
 					break;
 				case 2: default:
-					mousemove(bg2.x, bg2.y); // WSG 2
+					inputManager.mousemove(bg2.x, bg2.y); // WSG 2
 					break;
 			}
 		else if (bg == 1)
 			switch ((int)bgOrderMap.get(bg)) {
 				case 1:
-					mousemove(bg1.x, bg1.y); // AB 1
+					inputManager.mousemove(bg1.x, bg1.y); // AB 1
 					break;
 				case 2:
-					mousemove(bg2.x, bg2.y); // AB 2
+					inputManager.mousemove(bg2.x, bg2.y); // AB 2
 					break;
 				case 3: default:
-					mousemove(bg3.x, bg3.y); // AB 3
+					inputManager.mousemove(bg3.x, bg3.y); // AB 3
 					break;
 			}
 		else
 			switch ((int)bgOrderMap.get(bg)) {
 				case 1:
-					mousemove(bg1.x, bg1.y); // AV 1
+					inputManager.mousemove(bg1.x, bg1.y); // AV 1
 					break;
 				case 3:
-					mousemove(bg3.x, bg3.y); // AV 3
+					inputManager.mousemove(bg3.x, bg3.y); // AV 3
 					break;
 				case 4: default:
-					mousemove(bg4.x, bg4.y); // AV 4
+					inputManager.mousemove(bg4.x, bg4.y); // AV 4
 					break;
 			}
 		
@@ -544,64 +533,64 @@ public class wowbot {
 		if (isLowLevel) {
 			if (otherCTA) {
                 if (bg == 0)
-                    mousemove(bg1.x, bg1.y); // WSG
+                    inputManager.mousemove(bg1.x, bg1.y); // WSG
                 else if (bg == 1)
-                    mousemove(bg2.x, bg2.y); // AB
+                    inputManager.mousemove(bg2.x, bg2.y); // AB
                 else
-                    mousemove(bg3.x, bg3.y); // AV
+                    inputManager.mousemove(bg3.x, bg3.y); // AV
             } else {
                 if (bg == 0)
-                    mousemove(lowLevelWsg.x, lowLevelWsg.y); // WSG
+                    inputManager.mousemove(lowLevelWsg.x, lowLevelWsg.y); // WSG
                 else if (bg == 1)
-                    mousemove(bg1.x, bg1.y); // AB
+                    inputManager.mousemove(bg1.x, bg1.y); // AB
                 else
-                    mousemove(bg2.x, bg2.y); // AV
+                    inputManager.mousemove(bg2.x, bg2.y); // AV
             }
 		}
 
-		click();
+		inputManager.click();
 
 		r.delay(1000);
 		if (isGroup)
-			mousemove(queueJoin.x-120, queueJoin.y); // Join group queue
+			inputManager.mousemove(queueJoin.x-120, queueJoin.y); // Join group queue
 		else
-			mousemove(queueJoin.x, queueJoin.y); // Join queue
+			inputManager.mousemove(queueJoin.x, queueJoin.y); // Join queue
 
-		click();
+		inputManager.click();
 		
 		r.delay(3000);
-		mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
-		click();
+		inputManager.mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
+		inputManager.click();
 
 		r.delay(5000);
-		click();
+		inputManager.click();
 
 		// Wait for BG to start...
 		if (bg == 0) {
 			r.delay(1000);
-			sendKey(KeyEvent.VK_D, 500);
+			inputManager.sendKey(KeyEvent.VK_D, 500);
 			r.delay(500);
-			sendKey(KeyEvent.VK_W, 1700);
+			inputManager.sendKey(KeyEvent.VK_W, 1700);
 			r.delay(1000);
 
 			// Turn slightly in WSG beginning
-			sendKey(KeyEvent.VK_A, isAlly ? WSGTURNTIMERALLY : WSGTURNTIMERHORDE);
+			inputManager.sendKey(KeyEvent.VK_A, isAlly ? WSGTURNTIMERALLY : WSGTURNTIMERHORDE);
 
 			r.delay(500);
-			sendKey(KeyEvent.VK_W, 1500);
+			inputManager.sendKey(KeyEvent.VK_W, 1500);
 			r.delay(46000);
 		} else {
 			for (int i = 0; i < 5; i++) {
 				r.delay(9000);
-				sendKey(KeyEvent.VK_W, 1000);
+				inputManager.sendKey(KeyEvent.VK_W, 1000);
 
 				// Turn slightly in AV beginning
 				if (bg == 2 && i == 0) {
 					r.delay(100);
-					sendKey(KeyEvent.VK_A, 100);
+					inputManager.sendKey(KeyEvent.VK_A, 100);
 				} else if (bg == 2 && i == 4) {
 					r.delay(100);
-					sendKey(KeyEvent.VK_D, isAlly ? AVTURNTIMERALLY : AVTURNTIMERHORDE);
+					inputManager.sendKey(KeyEvent.VK_D, isAlly ? AVTURNTIMERALLY : AVTURNTIMERHORDE);
 				}
 			}
 		}
@@ -609,82 +598,81 @@ public class wowbot {
 		// Random walking and some spell casts
 		for (int i = 0; i < 100 && timeInBg < bgTimer; i++) {
 			r.delay(2000);
-			sendKey(KeyEvent.VK_W);
+			inputManager.sendKey(KeyEvent.VK_W);
 			
 			// Auto run
 			r.delay(500);
-			sendKeyWithAlt(KeyEvent.VK_X);
+			inputManager.sendKeyWithAlt(KeyEvent.VK_X);
 			
 			r.delay(9000);
-			sendKey(KeyEvent.VK_T);
+			inputManager.sendKey(KeyEvent.VK_T);
 			r.delay(400);
 			// 20 % chance of jumping, else use spell (scroll down)
 			//if (rand.nextInt(10) == 0) // 10 % chance
-			if (rand.nextInt(4) == 0) {
-				sendKey(KeyEvent.VK_SPACE);
-				r.delay(500);
-			} else
-				r.mouseWheel(1);
+			if (rand.nextInt(4) == 0)
+				inputManager.sendKey(KeyEvent.VK_SPACE);
+			else
+				inputManager.mousescroll(i);
 
-			r.delay(1500);
-			sendKey(KeyEvent.VK_W);
+			r.delay(2000);
+			inputManager.sendKey(KeyEvent.VK_W);
 
 			// 50 % chance of turning left / right
 			// Don't turn in AB / AV until a few minutes have passed 
 			if (bg == 0 || timeInBg > 150) {
 				if (rand.nextInt(2) == 0) {
 					//System.out.println("Turning left");
-					sendKey(KeyEvent.VK_A, 500);
+					inputManager.sendKey(KeyEvent.VK_A, 500);
 					// 50 % chance of turning some more
 					r.delay(100);
 					if (rand.nextInt(2) == 0)
-						sendKey(KeyEvent.VK_A, 200);
+						inputManager.sendKey(KeyEvent.VK_A, 200);
 					else
 						// Else use 2
-						sendKey(KeyEvent.VK_2);
+						inputManager.sendKey(KeyEvent.VK_2);
 				}
 				else {
 					//System.out.println("Turning right");
-					sendKey(KeyEvent.VK_D, 500);
+					inputManager.sendKey(KeyEvent.VK_D, 500);
 					r.delay(100);
 					// 50 % chance of turning some more
 					if (rand.nextInt(2) == 0)
-						sendKey(KeyEvent.VK_D, 200);
+						inputManager.sendKey(KeyEvent.VK_D, 200);
 					else
 						// Else use 4
-						sendKey(KeyEvent.VK_4);
+						inputManager.sendKey(KeyEvent.VK_4);
 				}
 			}
 			
-			// 30 % chance of clicking release and wait for 30 sec
+			// 30 % chance of inputManager.clicking release and wait for 30 sec
 			if (rand.nextInt(3) == 0) {
 				//System.out.println("Trying to release... Loop count: " + i);
 				// First try to accept ress from someone, then try to release
 				r.delay(500);
-				mousemove(queueAccept.x, queueAccept.y);
-				click();
+				inputManager.mousemove(queueAccept.x, queueAccept.y);
+				inputManager.click();
 				r.delay(500);
-				mousemove(acceptRess.x, acceptRess.y);
-				click();
-				// Try clicking a bit further down as well since
+				inputManager.mousemove(acceptRess.x, acceptRess.y);
+				inputManager.click();
+				// Try inputManager.clicking a bit further down as well since
 				// release button can be moved down if bot 
 				// ressed player but it expired before getting accepted
 				r.delay(500);
-				mousemove(acceptRess.x, acceptRess.y+70);
-				click();
+				inputManager.mousemove(acceptRess.x, acceptRess.y+70);
+				inputManager.click();
 
 				// Wait 30 sec
 				r.delay(12000);
-				sendKey(KeyEvent.VK_W);
+				inputManager.sendKey(KeyEvent.VK_W);
 				r.delay(15000);
 				timeInBg += 30;
 				// Also use shift-w
-				sendKeyWithShift(KeyEvent.VK_SHIFT);
+				inputManager.sendKeyWithShift(KeyEvent.VK_SHIFT);
 			}
 			timeInBg += 14;
 
 			// Use R spell
-			sendKey(KeyEvent.VK_R);
+			inputManager.sendKey(KeyEvent.VK_R);
 			//System.out.println("End of loop... timeInBg: " + timeInBg + ", bgTimer: " + bgTimer);
 		}
 		if (bg == 2)
@@ -698,207 +686,5 @@ public class wowbot {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	// Execute specific key
-	void sendKey(int key) {
-		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
-			return;
-		r.keyPress(key);
-		r.delay(60);
-		r.keyRelease(key);
-		r.delay(60);
-	}
-
-	void sendKey(int key, int delay) {
-		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
-			return;
-		r.keyPress(key);
-		r.delay(delay);
-		r.keyRelease(key);
-		r.delay(60);
-	}
-
-	void sendKeyWithShift(int key) {
-		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
-			return;
-		r.keyPress(KeyEvent.VK_SHIFT);
-		r.delay(30);
-		r.keyPress(key);
-		r.delay(30);
-		r.keyRelease(KeyEvent.VK_SHIFT);
-		r.delay(30);
-		r.keyRelease(key);
-		r.delay(30);
-	}
-
-	void sendKeyWithCtrl(int key) {
-		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
-			return;
-		r.keyPress(KeyEvent.VK_CONTROL);
-		r.delay(30);
-		r.keyPress(key);
-		r.delay(30);
-		r.keyRelease(KeyEvent.VK_CONTROL);
-		r.delay(30);
-		r.keyRelease(key);
-		r.delay(30);
-	}
-
-	void sendKeyWithAlt(int key) {
-		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
-			return;
-		r.keyPress(KeyEvent.VK_ALT);
-		r.delay(30);
-		r.keyPress(key);
-		r.delay(30);
-		r.keyRelease(KeyEvent.VK_ALT);
-		r.delay(30);
-		r.keyRelease(key);
-		r.delay(30);
-	}
-	
-	// Execute the characters in string key 
-	void sendKeys(String keys) {
-	    for (char c : keys.toCharArray()) {
-	    	if(c == 'Å') {
-	    		keyPress('Å');
-	    	}else if (c == 'Ä') {
-	    		keyPress('Ä');
-	    	}else if (c == 'Ö') {
-	    		keyPress('Ö');
-	    	}else if (c == 'å') {
-	    		keyPress('å');
-	    	}else if (c == 'ä') {
-	    		keyPress('ä');
-	    	}else if (c == 'ö') {
-	    		keyPress('ö');
-	    	}else if (c == '&') {
-	    		keyPress('&');
-	    	}else if (c == '#') {
-	    		keyPress('#');
-	    	}else if (c == '!') {
-	    		keyPress('!');
-	    	}else if (c == '/') {
-	    		keyPress('/');
-	    	}else if (c == ':') {
-	    		keyPress(':');
-	    	}else if (c == '@') {
-	    		keyPress('@');
-	    	}else {
-				int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
-				if (KeyEvent.CHAR_UNDEFINED == keyCode) {
-					throw new RuntimeException(
-						"Key code not found for character '" + c + "'");
-				}
-				r.delay(100);
-				r.keyPress(keyCode);
-				r.delay(100);
-				r.keyRelease(keyCode);
-				r.delay(100);
-	    	}
-	    }
-	}
-	
-	// Press keys via altNumpad
-	public void keyPress(char characterKey){
-	    switch (characterKey){
-	        case '!': altNumpad("33"); break;
-	        case '"': altNumpad("34"); break;
-	        case '#': altNumpad("35"); break;
-	        case '$': altNumpad("36"); break;
-	        case '%': altNumpad("37"); break;
-	        case '&': altNumpad("38"); break;
-	        case '\'': altNumpad("39"); break;
-	        case '(': altNumpad("40"); break;
-	        case ')': altNumpad("41"); break;
-	        case '*': altNumpad("42"); break;
-	        case '+': altNumpad("43"); break;
-	        case ',': altNumpad("44"); break;
-	        case '-': altNumpad("45"); break;
-	        case '.': altNumpad("46"); break;
-	        case '/': altNumpad("47"); break;
-	        case '0': altNumpad("48"); break;
-	        case ':': altNumpad("58"); break;
-	        case '@': altNumpad("64"); break;
-	        case 'å': altNumpad("134"); break;
-	        case 'ä': altNumpad("132"); break;
-	        case 'ö': altNumpad("148"); break;
-	        case 'Å': altNumpad("143"); break;
-	        case 'Ä': altNumpad("142"); break;
-	        case 'Ö': altNumpad("153"); break;
-	        default: return;
-	    }
-	}
-
-	// altNumpad for special characters
-	private void altNumpad(int... numpadCodes){
-	    if (numpadCodes.length == 0) {
-	        return;
-	    }
-	    r.keyPress(KeyEvent.VK_ALT);
-
-	    for (int NUMPAD_KEY : numpadCodes){
-	        r.keyPress(NUMPAD_KEY);
-	        r.keyRelease(NUMPAD_KEY);
-	    }
-	    r.keyRelease(KeyEvent.VK_ALT);
-	}
-
-	// altNumpad for special characters
-	private void altNumpad(String numpadCodes){
-	    if (numpadCodes == null || !numpadCodes.matches("^\\d+$")){
-	        return;
-	    }               
-	    r.keyPress(KeyEvent.VK_ALT);
-		
-	    for (char charater : numpadCodes.toCharArray()){
-	        int NUMPAD_KEY = getNumpad(charater);
-	        if (NUMPAD_KEY != -1){
-	            r.keyPress(NUMPAD_KEY);
-	            r.keyRelease(NUMPAD_KEY);
-	        }
-	    }
-	    r.keyRelease(KeyEvent.VK_ALT);        
-	}
-
-	// Get numpad keyevents
-	private int getNumpad(char numberChar){
-	    switch (numberChar){
-	        case '0' : return KeyEvent.VK_NUMPAD0;
-	        case '1' : return KeyEvent.VK_NUMPAD1;
-	        case '2' : return KeyEvent.VK_NUMPAD2;
-	        case '3' : return KeyEvent.VK_NUMPAD3;
-	        case '4' : return KeyEvent.VK_NUMPAD4;
-	        case '5' : return KeyEvent.VK_NUMPAD5;
-	        case '6' : return KeyEvent.VK_NUMPAD6;
-	        case '7' : return KeyEvent.VK_NUMPAD7;
-	        case '8' : return KeyEvent.VK_NUMPAD8;
-	        case '9' : return KeyEvent.VK_NUMPAD9;
-	        default: return -1;
-	    }
-	}
-
-	void mousemove(int x, int y) {
-		if (!windowFinder.GetCurrentWindow().contains("World of Warcraft"))
-			return;
-		r.mouseMove(x, y);    
-	}
-
-	// Click on the screen with Robot 
-	void click() {
-		r.delay(500);
-		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-	}
-
-	// Select and copy with Robot
-	void selectAndCopy(int x, int y) throws AWTException{
-		r.mouseMove(x, y);
-		// Double click
-		click();
-		click();
-		r.delay(100);
-		sendKeyWithCtrl(KeyEvent.VK_C);
 	}
 }
