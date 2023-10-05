@@ -10,18 +10,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import java.sql.*;
 
-class MousePos {
-	  final int x;
-	  final int y;
-	  MousePos(int x, int y) {this.x=x;this.y=y;}
-}
+//class MousePos {
+//	  final int x;
+//	  final int y;
+//	  MousePos(int x, int y) {this.x=x;this.y=y;}
+//}
 
 public class wowbot {
 	
@@ -33,18 +31,18 @@ public class wowbot {
 	LocalDateTime now;
 
 	// Configuration
-	private MousePos arena2v2 = new MousePos(240, 408);
-	private MousePos arena3v3 = new MousePos(240, 420);
-	private MousePos arena5v5 = new MousePos(240, 440);
-	private MousePos queueJoin = new MousePos(290, 662);
-	private MousePos queueAccept = new MousePos(850, 265);
-	private MousePos bgPress = new MousePos(180, 695);
-	private MousePos bg1 = new MousePos(240, 285);
-	private MousePos bg2 = new MousePos(240, 308);
-	private MousePos bg3 = new MousePos(240, 330);
-	private MousePos bg4 = new MousePos(240, 340);
-	private MousePos lowLevelWsg = new MousePos(240, 270);
-	private MousePos acceptRess = new MousePos(900, 265);
+	//private MousePos arena2v2 = new MousePos(240, 408);
+	//private MousePos arena3v3 = new MousePos(240, 420);
+	//private MousePos arena5v5 = new MousePos(240, 440);
+	//private MousePos queueJoin = new MousePos(290, 662);
+	//private MousePos queueAccept = new MousePos(850, 265);
+	//private MousePos bgPress = new MousePos(180, 695);
+	//private MousePos bg1 = new MousePos(240, 285);
+	//private MousePos bg2 = new MousePos(240, 308);
+	//private MousePos bg3 = new MousePos(240, 330);
+	//private MousePos bg4 = new MousePos(240, 340);
+	//private MousePos lowLevelWsg = new MousePos(240, 270);
+	//private MousePos acceptRess = new MousePos(900, 265);
 
 	// Timers
 	private static final int WSGTIMER = 1900;
@@ -55,8 +53,10 @@ public class wowbot {
 	private static final int AVTURNTIMERALLY = 130;
 	private static final int AVTURNTIMERHORDE = 70;
 	
-	// Queue settings
+	// Settings
 	private static boolean isAcore = true; // AzerothCore / TrinityCore
+	private static boolean isLinux = true; // Linux / Windows
+
 	private static boolean isArena = false; // Start with BG when random
 	private static boolean isGroup = false; // If group queue (BG only)
 	private static boolean isLowLevel = false; // If low level (special ordering of BGs)
@@ -74,8 +74,6 @@ public class wowbot {
 
 	// Horde races
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
-	// The order of the BGs might change depending on current Call to Arms
-	private Map<Object, Object> bgOrderMap;
 	
 	public wowbot() {
 		rand = new Random();
@@ -143,26 +141,6 @@ public class wowbot {
 		
 		otherCTA = (eyeCTA || strandCTA || isleCTA);
 		System.out.println("abCTA: " + abCTA + ", avCTA: " + avCTA + ", otherCTA: " + otherCTA);
-
-		bgOrderMap = new HashMap<Object, Object>() {{
-			if (otherCTA) {
-				put(0, 2); // WSG 2
-				put(1, 3); // AB 3
-				put(2, 4); // AV 4
-			} else if (avCTA) {
-				put(2, 1); // AV 1
-				put(0, 2); // WSG 2
-				put(1, 3); // AB 3
-			} else if (abCTA) {
-				put(1, 1); // AB 1
-				put(0, 2); // WSG 2
-				put(2, 3); // AV 3
-			} else {
-				put(0, 1); // WSG 1
-				put(1, 2); // AB 2
-				put(2, 3); // AV 3
-			}
-		}};
 	}
 	
 	boolean checkCTA(String startTime, long occurence, long length) {
@@ -362,42 +340,25 @@ public class wowbot {
 		r.delay(5000);
 		// /target arena char and interact with him
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		// Enter '/' manually for Linux
 		r.delay(200);
-		inputManager.sendKeyWithShift(KeyEvent.VK_7);
-		r.delay(60);
 		if (isAlly)
-			inputManager.sendKeys("target beka");
+			inputManager.sendKeys("/target beka");
 		else
-			inputManager.sendKeys("target zeggon");
+			inputManager.sendKeys("/target zeggon");
 		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(700);
 		inputManager.sendKey(KeyEvent.VK_9);
 		r.delay(1300);
 
 		if (arenaId == 100) // Hard coded, 100 means random arena
-			arenaId = rand.nextInt(3);
+			arenaId = rand.nextInt(1, 4);
 		
 		System.out.println("Playing arena: " + arenaId);
+		inputManager.joinBattlefield(arenaId, isGroup);
 
-		if (arenaId == 0)
-			inputManager.mousemove(arena2v2.x, arena2v2.y); // 2v2
-		else if (arenaId == 1)
-			inputManager.mousemove(arena3v3.x, arena3v3.y); // 3v3
-		else
-			inputManager.mousemove(arena5v5.x, arena5v5.y); // 5v5
-
-		inputManager.click();
 		r.delay(1000);
-		inputManager.mousemove(queueJoin.x, queueJoin.y); // Join queue
-		inputManager.click();
-		
-		r.delay(3000);
-		inputManager.mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
-		inputManager.click();
-
+		inputManager.clickPopup(); // Accept queue
 		r.delay(5000);
-		inputManager.click();
 
 		// Wait for arena to start...
 		for (int i = 0; i < 5; i++) {
@@ -483,87 +444,59 @@ public class wowbot {
 		inputManager.sendKey(KeyEvent.VK_ENTER);
 
 		r.delay(5000);
-		// Open PVP window
-		inputManager.sendKey(KeyEvent.VK_H);
-		r.delay(1000);
-		inputManager.mousemove(bgPress.x, bgPress.y); // Press Battlegrounds
-		inputManager.click();
 		
 		// Handle random BG
 		if (bg == 100) // Hard coded, 100 means random arena
 			bg = rand.nextInt(3);
 		System.out.println("Playing BG: " + bg);
+		int bgQueueIndex = bg;
 
-		r.delay(1000);
-		if (bg == 0)
-			switch ((int)bgOrderMap.get(bg)) {
-				case 1:
-					inputManager.mousemove(bg1.x, bg1.y); // WSG 1
-					break;
-				case 2: default:
-					inputManager.mousemove(bg2.x, bg2.y); // WSG 2
-					break;
-			}
-		else if (bg == 1)
-			switch ((int)bgOrderMap.get(bg)) {
-				case 1:
-					inputManager.mousemove(bg1.x, bg1.y); // AB 1
-					break;
-				case 2:
-					inputManager.mousemove(bg2.x, bg2.y); // AB 2
-					break;
-				case 3: default:
-					inputManager.mousemove(bg3.x, bg3.y); // AB 3
-					break;
-			}
-		else
-			switch ((int)bgOrderMap.get(bg)) {
-				case 1:
-					inputManager.mousemove(bg1.x, bg1.y); // AV 1
-					break;
-				case 3:
-					inputManager.mousemove(bg3.x, bg3.y); // AV 3
-					break;
-				case 4: default:
-					inputManager.mousemove(bg4.x, bg4.y); // AV 4
-					break;
-			}
-		
-		// USE THIS IF LOW LEVEL
+		if (bg == 0) {
+			// WSG
+			if (otherCTA || abCTA || avCTA)
+				bgQueueIndex = 3;
+			else
+				bgQueueIndex = 2;
+		} else if (bg == 1) {
+			// AB
+			if (otherCTA || avCTA)
+				bgQueueIndex = 3;
+			else if (abCTA)
+				bgQueueIndex = 2;
+			else
+				bgQueueIndex = 3;
+		} else {
+			// AV
+			if (otherCTA)
+				bgQueueIndex = 5;
+			else if (avCTA)
+				bgQueueIndex = 2;
+			else
+				bgQueueIndex = 4;
+		}
+		// If low level
 		if (isLowLevel) {
-			if (otherCTA) {
-                if (bg == 0)
-                    inputManager.mousemove(bg1.x, bg1.y); // WSG
-                else if (bg == 1)
-                    inputManager.mousemove(bg2.x, bg2.y); // AB
-                else
-                    inputManager.mousemove(bg3.x, bg3.y); // AV
-            } else {
-                if (bg == 0)
-                    inputManager.mousemove(lowLevelWsg.x, lowLevelWsg.y); // WSG
-                else if (bg == 1)
-                    inputManager.mousemove(bg1.x, bg1.y); // AB
-                else
-                    inputManager.mousemove(bg2.x, bg2.y); // AV
-            }
+			if (bg == 0)
+				bgQueueIndex = 1;
+			else if (bg == 1) {
+				if (abCTA)
+					bgQueueIndex = 1;
+				else if (avCTA)
+					bgQueueIndex = 3;
+				else
+					bgQueueIndex = 2;
+			} else {
+				if (avCTA)
+					bgQueueIndex = 1;
+				else
+					bgQueueIndex = 3;
+			}
 		}
 
-		inputManager.click();
-
-		r.delay(1000);
-		if (isGroup)
-			inputManager.mousemove(queueJoin.x-120, queueJoin.y); // Join group queue
-		else
-			inputManager.mousemove(queueJoin.x, queueJoin.y); // Join queue
-
-		inputManager.click();
-		
-		r.delay(3000);
-		inputManager.mousemove(queueAccept.x, queueAccept.y); // Accept queue inv
-		inputManager.click();
-
-		r.delay(5000);
-		inputManager.click();
+		// Join BG
+		inputManager.selectBg(bgQueueIndex);
+		inputManager.joinBattlefield(0, isGroup);
+		inputManager.clickPopup(); // Accept queue
 
 		// Wait for BG to start...
 		if (bg == 0) {
@@ -649,24 +582,14 @@ public class wowbot {
 				//System.out.println("Trying to release... Loop count: " + i);
 				// First try to accept ress from someone, then try to release
 				r.delay(500);
-				inputManager.mousemove(queueAccept.x, queueAccept.y);
-				inputManager.click();
-				r.delay(500);
-				inputManager.mousemove(acceptRess.x, acceptRess.y);
-				inputManager.click();
-				// Try inputManager.clicking a bit further down as well since
-				// release button can be moved down if bot 
-				// ressed player but it expired before getting accepted
-				r.delay(500);
-				inputManager.mousemove(acceptRess.x, acceptRess.y+70);
-				inputManager.click();
-
-				// Wait 30 sec
+				inputManager.clickPopup();
+				r.delay(1000);
+				// Wait ~30 sec
 				r.delay(12000);
 				inputManager.sendKey(KeyEvent.VK_W);
 				r.delay(15000);
 				timeInBg += 30;
-				// Also use shift-w
+				// Use shift-w
 				inputManager.sendKeyWithShift(KeyEvent.VK_SHIFT);
 			}
 			timeInBg += 14;
@@ -676,7 +599,7 @@ public class wowbot {
 			//System.out.println("End of loop... timeInBg: " + timeInBg + ", bgTimer: " + bgTimer);
 		}
 		if (bg == 2)
-			System.out.println("End of AV loop... timeInBg: " + timeInBg);
+			System.out.println("AV loop finished... timeInBg: " + timeInBg);
 	}
 	
 	// Thread.Sleep for x amount of time

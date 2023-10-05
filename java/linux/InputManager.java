@@ -13,6 +13,49 @@ public class InputManager {
 	public InputManager(Robot robot) {
 		r = robot;
 	}
+	
+	void joinBattlefield(int index, boolean isGroup) {
+		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+			return;
+		sendKey(KeyEvent.VK_ENTER);
+		sendKeys("/run JoinBattlefield(" + index + "," + (isGroup ? "1" : "0") + ")");
+		sendKey(KeyEvent.VK_ENTER);
+	}
+
+	void togglePVPFrame() {
+		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+			return;
+		sendKey(KeyEvent.VK_ENTER);
+		sendKeys("/run TogglePVPFrame()");
+		sendKey(KeyEvent.VK_ENTER);
+	}
+	
+	// Use /framestack in-game to find names for buttons / frames
+	void selectBg(int index) {
+		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+			return;
+		togglePVPFrame();
+		sendKey(KeyEvent.VK_ENTER);
+		sendKeys("/click PVPParentFrameTab2");
+		sendKey(KeyEvent.VK_ENTER);
+		r.delay(300);
+		sendKey(KeyEvent.VK_ENTER);
+		sendKeys("/run PVPBattlegroundFrame.selectedBG = " + index);
+		sendKey(KeyEvent.VK_ENTER);
+		r.delay(300);
+		togglePVPFrame();
+		r.delay(300);
+		togglePVPFrame();
+		r.delay(300);
+	}
+	
+	void clickPopup() {
+		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+			return;
+		sendKey(KeyEvent.VK_ENTER);
+		sendKeys("/click StaticPopup1Button1");
+		sendKey(KeyEvent.VK_ENTER);
+	}
 
 	// Execute specific key
 	void sendKey(int key) {
@@ -96,11 +139,21 @@ public class InputManager {
 	    	}else if (c == '!') {
 	    		keyPress('!');
 	    	}else if (c == '/') {
-	    		keyPress('/');
+	    		//keyPress('/');
+				sendKeyWithShift(KeyEvent.VK_7);
+	    	}else if (c == '(') {
+				sendKeyWithShift(KeyEvent.VK_8);
+	    	}else if (c == ')') {
+				sendKeyWithShift(KeyEvent.VK_9);
+	    	}else if (c == '=') {
+				sendKeyWithShift(KeyEvent.VK_0);
 	    	}else if (c == ':') {
 	    		keyPress(':');
 	    	}else if (c == '@') {
 	    		keyPress('@');
+	    	} else if (Character.isUpperCase(c)) {
+				int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
+				sendKeyWithShift(keyCode);
 	    	}else {
 				int keyCode = KeyEvent.getExtendedKeyCodeForChar(c);
 				if (KeyEvent.CHAR_UNDEFINED == keyCode) {
@@ -109,7 +162,7 @@ public class InputManager {
 				}
 				r.delay(100);
 				r.keyPress(keyCode);
-				r.delay(100);
+				r.delay(50);
 				r.keyRelease(keyCode);
 				r.delay(100);
 	    	}
