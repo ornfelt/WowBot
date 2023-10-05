@@ -25,7 +25,7 @@ public class wowbot {
 	
 	/* Variables needed for Robot */
 	private Robot r;
-	private InputManager inputManager;
+	private inputmanager inputManager;
 	Random rand;
 	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yy/MM/dd");
 	LocalDateTime now;
@@ -82,7 +82,7 @@ public class wowbot {
 		} catch (AWTException e) {
 			e.printStackTrace();
 		}
-		inputManager = new InputManager(r);
+		inputManager = new inputmanager(r);
 		
 		//String myString = "DONE";
 		//StringSelection stringSelection = new StringSelection(myString);

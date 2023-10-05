@@ -5,12 +5,12 @@ import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class InputManager {
+public class inputmanager {
 	
 	private Robot r;
 	private final static String wowName = "World of Warcraft";
 	
-	public InputManager(Robot robot) {
+	public inputmanager(Robot robot) {
 		r = robot;
 	}
 	
