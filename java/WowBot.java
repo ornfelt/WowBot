@@ -254,10 +254,11 @@ public class WowBot {
 		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(5000);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(5000);
+		r.delay(8000);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(200);
+		r.delay(50);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
+		r.delay(2000);
 	}
 	
 	// Start BOT
