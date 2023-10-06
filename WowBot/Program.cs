@@ -8,9 +8,9 @@ namespace WowBot
         static void Main(string[] args)
         {
             //Dfs.StartDfs(); // DFS search wander nodes
-            InputManager inputManager = new InputManager();
 
-            bool useBloogBot = true;
+            InputManager inputManager = new InputManager();
+            bool useBloogBot = false;
             bool isAcore = true;
 
             if (useBloogBot)

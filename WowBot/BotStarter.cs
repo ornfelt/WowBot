@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
 //using System.Data.SqlClient; // If you're using SQL Server
 using MySql.Data.MySqlClient;
@@ -54,11 +50,12 @@ namespace WowBot
         private void StartBot()
         {
             ProcessHandler.StartProcess("D:\\My files\\svea_laptop\\code_hdd\\ml\\BloogBot\\Bot\\Bootstrapper.exe");
+            //ProcessHandler.StartProcess("C:\\Users\\jonas\\Code2\\C++\\BloogBot\\Bot\\Bootstrapper.exe");
             Thread.Sleep(25000);
             inputManager.SendEnter(); // Get rid of VS debug message
             Thread.Sleep(8000);
             WindowFinder.ShowWindow("World of Warcraft");
-            inputManager.SendLogin(isAcore, false);
+            inputManager.SendLogin(isAcore, false, true);
             Thread.Sleep(7000);
             WindowFinder.ShowWindow("BloogBot");
             inputManager.SendTab();
