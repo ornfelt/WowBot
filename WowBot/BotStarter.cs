@@ -49,8 +49,8 @@ namespace WowBot
 
         private void StartBot()
         {
-            ProcessHandler.StartProcess("D:\\My files\\svea_laptop\\code_hdd\\ml\\BloogBot\\Bot\\Bootstrapper.exe");
-            //ProcessHandler.StartProcess("C:\\Users\\jonas\\Code2\\C++\\BloogBot\\Bot\\Bootstrapper.exe");
+            //ProcessHandler.StartProcess("D:\\My files\\svea_laptop\\code_hdd\\ml\\BloogBot\\Bot\\Bootstrapper.exe");
+            ProcessHandler.StartProcess("C:\\Users\\jonas\\Code2\\C++\\BloogBot\\Bot\\Bootstrapper.exe");
             Thread.Sleep(25000);
             inputManager.SendEnter(); // Get rid of VS debug message
             Thread.Sleep(8000);
