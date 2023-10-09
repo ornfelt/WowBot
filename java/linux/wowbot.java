@@ -45,9 +45,9 @@ public class wowbot {
 	//private MousePos acceptRess = new MousePos(900, 265);
 
 	// Timers
-	private static final int WSGTIMER = 1900;
-	private static final int ABTIMER = 1600;
-	private static final int AVTIMER = 2700;
+	private static final int WSGTIMER = 1700;
+	private static final int ABTIMER = 1500;
+	private static final int AVTIMER = 2600;
 	private static final int WSGTURNTIMERALLY = 500;
 	private static final int WSGTURNTIMERHORDE = 450;
 	private static final int AVTURNTIMERALLY = 130;
@@ -74,7 +74,7 @@ public class wowbot {
 
 	// Horde races
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
-	
+    
 	public wowbot() {
 		rand = new Random();
 		try {
@@ -82,7 +82,7 @@ public class wowbot {
 		} catch (AWTException e) {
 			e.printStackTrace();
 		}
-		inputManager = new inputmanager(r);
+		inputManager = new inputmanager(r, isLinux);
 		
 		//String myString = "DONE";
 		//StringSelection stringSelection = new StringSelection(myString);
@@ -170,26 +170,28 @@ public class wowbot {
 	// To compile: javac -classpath ..\lib\mysql-connector-java-8.0.20.jar;. test.java
 	// To run: java -classpath ..\lib\mysql-connector-java-8.0.20.jar;. test
 	// Or with eclipse: project properties -> Java build path -> libraries -> classpath -> add external jar
-	// For mysql: https://dev.mysql.com/downloads/connector/j/?os=26
+	// For mysql: https://dev.mysql.com/downloads/connector/j/
 	// For mariadb: https://jar-download.com/artifacts/org.mariadb.jdbc
 	void setPlayerSettings() {
 		Connection connection = null;
 		System.out.println("Retrieving player settings...");
         try {
-            //Class.forName("com.mysql.cj.jdbc.Driver");
-            Class.forName("org.mariadb.jdbc.Driver");
-            if (isAcore)
+			if (isLinux)
+				Class.forName("org.mariadb.jdbc.Driver");
+			else
+				Class.forName("com.mysql.cj.jdbc.Driver");
+			if (isAcore)
 				connection = DriverManager.getConnection(
-					//"jdbc:mysql://localhost:3306/acore_characters",
-					"jdbc:mariadb://localhost:3306/acore_characters",
+					isLinux ? "jdbc:mariadb://localhost:3306/acore_characters" :
+					"jdbc:mysql://localhost:3306/acore_characters",
 					"acore", "acore");
             else
 				connection = DriverManager.getConnection(
-					//"jdbc:mysql://localhost:3306/characters",
-					"jdbc:mariadb://localhost:3306/characters",
+					isLinux ? "jdbc:mariadb://localhost:3306/characters" :
+					"jdbc:mysql://localhost:3306/characters",
 					"trinity", "trinity");
  
-            int accountId = 1;
+            //int accountId = 1;
             Statement statement = connection.createStatement();
             //ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1 and account = " + accountId);
             ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
@@ -201,15 +203,15 @@ public class wowbot {
 				System.out.println("Player not logged in. Trying to log in...");
 				tryLogin();
 				// Execute SQL again
-				resultSet = statement.executeQuery("select name, race, level from characters where online = 1 and account = " + accountId);
+				resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
 				// Try one more time
 				if (!resultSet.next()) {
 					System.out.println("Player still not logged in. Trying to log in once more...");
-                    r.delay(1000);
-                    inputManager.sendKey(KeyEvent.VK_ENTER);
+					r.delay(1000);
+					inputManager.sendKey(KeyEvent.VK_ENTER);
 					tryLogin();
 					// Execute SQL again
-					resultSet = statement.executeQuery("select name, race, level from characters where online = 1 and account = " + accountId);
+					resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
 					if (!resultSet.next())
 						System.exit(0);
 				}
@@ -252,15 +254,17 @@ public class wowbot {
 		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(5000);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(5000);
+		r.delay(8000);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(200);
+		r.delay(50);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
+		r.delay(2000);
 	}
 	
 	// Start BOT
 	void startBot() {
 		while (true) {
+			//WowTabFinder.showWowWindow();
 			// Check game and player status
 			threadSleep(3000);
 			setServer();
@@ -351,7 +355,7 @@ public class wowbot {
 		r.delay(1300);
 
 		if (arenaId == 100) // Hard coded, 100 means random arena
-			arenaId = rand.nextInt(1, 4);
+			arenaId = rand.nextInt(3)+1;
 		
 		System.out.println("Playing arena: " + arenaId);
 		inputManager.joinBattlefield(arenaId, isGroup);
@@ -426,12 +430,6 @@ public class wowbot {
 		// Settings
 		int timeInBg = 0;
 		int bgTimer = 0;
-		if (bg == 0)
-			bgTimer = WSGTIMER;
-		else if (bg == 1)
-			bgTimer = ABTIMER;
-		else
-			bgTimer = AVTIMER;
 
 		// Teleport to some place fun
 		inputManager.sendKey(KeyEvent.VK_ENTER);
@@ -449,6 +447,15 @@ public class wowbot {
 		if (bg == 100) // Hard coded, 100 means random arena
 			bg = rand.nextInt(3);
 		System.out.println("Playing BG: " + bg);
+
+		// Set BG timer
+		if (bg == 0)
+			bgTimer = WSGTIMER;
+		else if (bg == 1)
+			bgTimer = ABTIMER;
+		else
+			bgTimer = AVTIMER;
+
 		int bgQueueIndex = bg;
 
 		if (bg == 0) {
@@ -497,6 +504,7 @@ public class wowbot {
 		inputManager.selectBg(bgQueueIndex);
 		inputManager.joinBattlefield(0, isGroup);
 		inputManager.clickPopup(); // Accept queue
+		r.delay(7000);
 
 		// Wait for BG to start...
 		if (bg == 0) {

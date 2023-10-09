@@ -9,9 +9,11 @@ public class inputmanager {
 	
 	private Robot r;
 	private final static String wowName = "World of Warcraft";
+	private boolean isLinux = false;
 	
-	public inputmanager(Robot robot) {
+	public inputmanager(Robot robot, boolean isLinux) {
 		r = robot;
+		this.isLinux = isLinux;
 	}
 	
 	void joinBattlefield(int index, boolean isGroup) {
@@ -139,13 +141,15 @@ public class inputmanager {
 	    	}else if (c == '!') {
 	    		keyPress('!');
 	    	}else if (c == '/') {
-	    		//keyPress('/');
-				sendKeyWithShift(KeyEvent.VK_7);
-	    	}else if (c == '(') {
+	    		if (!isLinux)
+					keyPress('/');
+	    		else
+					sendKeyWithShift(KeyEvent.VK_7);
+	    	}else if (c == '(' && isLinux) {
 				sendKeyWithShift(KeyEvent.VK_8);
-	    	}else if (c == ')') {
+	    	}else if (c == ')' && isLinux) {
 				sendKeyWithShift(KeyEvent.VK_9);
-	    	}else if (c == '=') {
+	    	}else if (c == '=' && isLinux) {
 				sendKeyWithShift(KeyEvent.VK_0);
 	    	}else if (c == ':') {
 	    		keyPress(':');
