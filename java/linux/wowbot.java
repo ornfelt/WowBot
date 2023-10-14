@@ -66,6 +66,7 @@ public class wowbot {
 	private static boolean isAlly = false; // Faction
 	private static int bgCount = 0; // Keep track of how many BGs / arenas that have been played
 	private static int bgCountMax = 6; // Max amount of bgCount before switching to BG / arena
+	private static int level = 0; // Player level
 	private static String bgInput = "ra"; // Both random BGs and arena
 	//private static String bgInput = "r"; // Random BGs
 	//private static String bgInput = "a"; // Random arenas
@@ -196,7 +197,6 @@ public class wowbot {
             //ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1 and account = " + accountId);
             ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
             String race = "";
-            int level = 0;
 
             // Check if player isn't logged in
             if (!resultSet.next()) {
@@ -446,13 +446,11 @@ public class wowbot {
 			inputManager.sendKeys(".tele " + bgTeleSpotHorde);
 		r.delay(100);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-
 		r.delay(5000);
 		
 		// Handle random BG
 		if (bg == 100) // Hard coded, 100 means random arena
 			bg = rand.nextInt(3);
-		System.out.println("Playing BG: " + bg);
 
 		// Set BG timer
 		if (bg == 0)
@@ -462,49 +460,40 @@ public class wowbot {
 		else
 			bgTimer = AVTIMER;
 
+        // Set BG queue index
 		int bgQueueIndex = bg;
+        if (bg == 0)
+        {
+            // WSG
+            if ((!isLowLevel && (otherCTA || abCTA || avCTA)) || isLowLevel && (abCTA || avCTA))
+                bgQueueIndex = 3;
+            else
+                bgQueueIndex = 2;
+        }
+        else if (bg == 1)
+        {
+            // AB
+            if ((!isLowLevel && (otherCTA || avCTA)) || isLowLevel && avCTA)
+                bgQueueIndex = 4;
+            else if (abCTA)
+                bgQueueIndex = 2;
+            else
+                bgQueueIndex = 3;
+        }
+        else
+        {
+            // AV
+            if (!isLowLevel && otherCTA)
+                bgQueueIndex = 5;
+            else if (avCTA)
+                bgQueueIndex = 2;
+            else
+                bgQueueIndex = 4;
+        }
 
-		if (bg == 0) {
-			// WSG
-			if (otherCTA || abCTA || avCTA)
-				bgQueueIndex = 3;
-			else
-				bgQueueIndex = 2;
-		} else if (bg == 1) {
-			// AB
-			if (otherCTA || avCTA)
-				bgQueueIndex = 3;
-			else if (abCTA)
-				bgQueueIndex = 2;
-			else
-				bgQueueIndex = 3;
-		} else {
-			// AV
-			if (otherCTA)
-				bgQueueIndex = 5;
-			else if (avCTA)
-				bgQueueIndex = 2;
-			else
-				bgQueueIndex = 4;
-		}
-		// If low level
-		if (isLowLevel) {
-			if (bg == 0)
-				bgQueueIndex = 1;
-			else if (bg == 1) {
-				if (abCTA)
-					bgQueueIndex = 1;
-				else if (avCTA)
-					bgQueueIndex = 3;
-				else
-					bgQueueIndex = 2;
-			} else {
-				if (avCTA)
-					bgQueueIndex = 1;
-				else
-					bgQueueIndex = 3;
-			}
-		}
+        if (level < 20)
+            bgQueueIndex = 3;
+        System.out.println("Queueing for bg: " + bg + ", bgQueueIndex: " + bgQueueIndex);
 
 		// Join BG
 		inputManager.selectBg(bgQueueIndex);
