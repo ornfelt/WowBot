@@ -48,6 +48,7 @@ namespace WowBot
         private static bool avCTA = false; // If AV is Call To Arms
         private static bool abCTA = false; // If AB is Call To Arms
         private static bool isAlly = false; // Faction
+        private static int level = 0; // Player level
         private static int bgCount = 0; // Keep track of how many BGs / arenas that have been played
         private static int bgCountMax = 6; // Max amount of bgCount before switching to BG / arena
         private static string bgInput = "ra"; // Both random BGs and arena
@@ -133,7 +134,6 @@ namespace WowBot
                 MySqlDataReader reader = command.ExecuteReader();
 
                 string race = "";
-                int level = 0;
 
                 // Check if player isn't logged in
                 if (!reader.Read())
@@ -159,7 +159,7 @@ namespace WowBot
                 race = reader["race"].ToString().Trim();
                 level = Convert.ToInt32(reader["level"]);
                 isAlly = !hordeRaces.Contains(Convert.ToInt32(race));
-                isLowLevel = level < 70;
+                isLowLevel = level < 61;
                 Console.WriteLine($"\nrace: {race}, level: {level}");
                 Console.WriteLine($"isAlly: {isAlly}, isLowLevel: {isLowLevel}");
 
@@ -391,12 +391,12 @@ namespace WowBot
             else
                 bgTimer = AVTIMER;
 
+            // Set BG queue index
             int bgQueueIndex;
-
             if (bg == 0)
             {
                 // WSG
-                if (otherCTA || abCTA || avCTA)
+                if ((!isLowLevel && (otherCTA || abCTA || avCTA)) || isLowLevel && (abCTA || avCTA))
                     bgQueueIndex = 3;
                 else
                     bgQueueIndex = 2;
@@ -404,8 +404,8 @@ namespace WowBot
             else if (bg == 1)
             {
                 // AB
-                if (otherCTA || avCTA)
-                    bgQueueIndex = 3;
+                if ((!isLowLevel && (otherCTA || avCTA)) || isLowLevel && avCTA)
+                    bgQueueIndex = 4;
                 else if (abCTA)
                     bgQueueIndex = 2;
                 else
@@ -414,35 +414,16 @@ namespace WowBot
             else
             {
                 // AV
-                if (otherCTA)
+                if (!isLowLevel && otherCTA)
                     bgQueueIndex = 5;
                 else if (avCTA)
                     bgQueueIndex = 2;
                 else
                     bgQueueIndex = 4;
             }
-            // If low level
-            if (isLowLevel)
-            {
-                if (bg == 0)
-                    bgQueueIndex = 1;
-                else if (bg == 1)
-                {
-                    if (abCTA)
-                        bgQueueIndex = 1;
-                    else if (avCTA)
-                        bgQueueIndex = 3;
-                    else
-                        bgQueueIndex = 2;
-                }
-                else
-                {
-                    if (avCTA)
-                        bgQueueIndex = 1;
-                    else
-                        bgQueueIndex = 3;
-                }
-            }
+
+            if (level < 20)
+                bgQueueIndex = 3;
 
             // Join BG
             inputManager.SelectBg(bgQueueIndex);
