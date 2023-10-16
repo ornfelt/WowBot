@@ -59,14 +59,14 @@ public class wowbot {
 
 	private static boolean isArena = false; // Start with BG when random
 	private static boolean isGroup = false; // If group queue (BG only)
-	private static boolean isLowLevel = false; // If low level (special ordering of BGs)
 	private static boolean otherCTA = false; // If other BG than WSG, AB, AV is call to arms 
 	private static boolean avCTA = false; // If AV is Call To Arms
 	private static boolean abCTA = false; // If AB is Call To Arms
+    private static boolean eyeCTA, strandCTA, isleCTA;
 	private static boolean isAlly = false; // Faction
 	private static int bgCount = 0; // Keep track of how many BGs / arenas that have been played
 	private static int bgCountMax = 6; // Max amount of bgCount before switching to BG / arena
-	private static int level = 0; // Player level
+	private static int playerLevel = 0; // Player level
 	private static String bgInput = "ra"; // Both random BGs and arena
 	//private static String bgInput = "r"; // Random BGs
 	//private static String bgInput = "a"; // Random arenas
@@ -129,15 +129,15 @@ public class wowbot {
 		System.out.println("AB CTA: " + abCTA);
 
 		// EYE: 353
-        boolean eyeCTA = checkCTA("2010-04-30 18:00:00", occurence, length);
+        eyeCTA = checkCTA("2010-04-30 18:00:00", occurence, length);
 		System.out.println("EYE CTA: " + eyeCTA);
 
 		// Strand: 400
-		boolean strandCTA = checkCTA("2010-04-09 18:00:00", occurence, length);
+		strandCTA = checkCTA("2010-04-09 18:00:00", occurence, length);
 		System.out.println("Strand CTA: " + strandCTA);
 
 		// Isle: 420
-		boolean isleCTA = checkCTA("2010-04-16 18:00:00", occurence, length);
+		isleCTA = checkCTA("2010-04-16 18:00:00", occurence, length);
 		System.out.println("Isle CTA: " + isleCTA);
 		
 		otherCTA = (eyeCTA || strandCTA || isleCTA);
@@ -227,11 +227,9 @@ public class wowbot {
             //}
 
 			race = resultSet.getString("race").trim();
-			level = resultSet.getInt("level");
+			playerLevel = resultSet.getInt("level");
 			isAlly = !hordeRaces.contains(Integer.parseInt(race));
-			isLowLevel = level < 70;
-			System.out.println("\nrace: " + race + ", level: " + level);
-			System.out.println("isAlly: " + isAlly + ", isLowLevel: " + isLowLevel);
+			System.out.println("\nrace: " + race + ", level: " + playerLevel + ", isAlly: " + isAlly);
 
             resultSet.close();
             statement.close();
@@ -450,7 +448,7 @@ public class wowbot {
 		
 		// Handle random BG
 		if (bg == 100) // Hard coded, 100 means random arena
-			bg = rand.nextInt(3);
+			bg = (playerLevel < 20) ? 0 : (playerLevel < 51) ? rand.nextInt(2) : rand.nextInt(3);
 
 		// Set BG timer
 		if (bg == 0)
@@ -461,38 +459,21 @@ public class wowbot {
 			bgTimer = AVTIMER;
 
         // Set BG queue index
-		int bgQueueIndex = bg;
-        if (bg == 0)
-        {
-            // WSG
-            if ((!isLowLevel && (otherCTA || abCTA || avCTA)) || isLowLevel && (abCTA || avCTA))
-                bgQueueIndex = 3;
-            else
-                bgQueueIndex = 2;
-        }
-        else if (bg == 1)
-        {
-            // AB
-            if ((!isLowLevel && (otherCTA || avCTA)) || isLowLevel && avCTA)
-                bgQueueIndex = 4;
-            else if (abCTA)
-                bgQueueIndex = 2;
-            else
-                bgQueueIndex = 3;
-        }
-        else
-        {
-            // AV
-            if (!isLowLevel && otherCTA)
-                bgQueueIndex = 5;
-            else if (avCTA)
-                bgQueueIndex = 2;
-            else
-                bgQueueIndex = 4;
-        }
+        int bgQueueIndex;
 
-        if (level < 20)
+        if (playerLevel < 20)
             bgQueueIndex = 3;
+        else if (playerLevel < 51)
+            bgQueueIndex = (bg == 0 && !abCTA) || (bg == 1 && abCTA) ? 3 : 4;
+        else if (playerLevel < 61)
+            bgQueueIndex = (bg == 0 && !abCTA && !avCTA) ? 3 : (bg == 1 && avCTA) || (bg == 2 && avCTA) ? 5 : 4;
+        else if (playerLevel < 71)
+            bgQueueIndex = (bg == 0 && !abCTA && !avCTA && !eyeCTA) ? 2 : (bg == 1 && (avCTA || eyeCTA)) || (bg == 2 && avCTA) ? 4 : 3;
+        else
+            bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
+                   bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
+                             (otherCTA ? 5 : avCTA ? 2 : 4);
+
         System.out.println("Queueing for bg: " + bg + ", bgQueueIndex: " + bgQueueIndex);
 
 		// Join BG
