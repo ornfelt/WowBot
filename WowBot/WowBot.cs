@@ -43,12 +43,12 @@ namespace WowBot
         private readonly bool isAcore = true; // AzerothCore / TrinityCore
         private static bool isArena = false; // Start with BG when random
         private static bool isGroup = false; // If group queue (BG only)
-        private static bool isLowLevel = false; // If low level (special ordering of BGs)
         private static bool otherCTA = false; // If other BG than WSG, AB, AV is call to arms 
         private static bool avCTA = false; // If AV is Call To Arms
         private static bool abCTA = false; // If AB is Call To Arms
+        private static bool eyeCTA, strandCTA, isleCTA;
         private static bool isAlly = false; // Faction
-        private static int level = 0; // Player level
+        private static int playerLevel = 0; // Player level
         private static int bgCount = 0; // Keep track of how many BGs / arenas that have been played
         private static int bgCountMax = 6; // Max amount of bgCount before switching to BG / arena
         private static string bgInput = "ra"; // Both random BGs and arena
@@ -86,15 +86,15 @@ namespace WowBot
             Console.WriteLine("AB CTA: " + abCTA);
 
             // EYE: 353
-            bool eyeCTA = CheckCTA("2010-04-30 18:00:00", occurence, length);
+            eyeCTA = CheckCTA("2010-04-30 18:00:00", occurence, length);
             Console.WriteLine("EYE CTA: " + eyeCTA);
 
             // Strand: 400
-            bool strandCTA = CheckCTA("2010-04-09 18:00:00", occurence, length);
+            strandCTA = CheckCTA("2010-04-09 18:00:00", occurence, length);
             Console.WriteLine("Strand CTA: " + strandCTA);
 
             // Isle: 420
-            bool isleCTA = CheckCTA("2010-04-16 18:00:00", occurence, length);
+            isleCTA = CheckCTA("2010-04-16 18:00:00", occurence, length);
             Console.WriteLine("Isle CTA: " + isleCTA);
 
             otherCTA = (eyeCTA || strandCTA || isleCTA);
@@ -157,11 +157,9 @@ namespace WowBot
                 }
 
                 race = reader["race"].ToString().Trim();
-                level = Convert.ToInt32(reader["level"]);
+                playerLevel = Convert.ToInt32(reader["level"]);
                 isAlly = !hordeRaces.Contains(Convert.ToInt32(race));
-                isLowLevel = level < 61;
-                Console.WriteLine($"\nrace: {race}, level: {level}");
-                Console.WriteLine($"isAlly: {isAlly}, isLowLevel: {isLowLevel}");
+                Console.WriteLine($"\nrace: {race}, level: {playerLevel}, isAlly: {isAlly}");
 
                 reader.Close();
                 command.Dispose();
@@ -380,7 +378,7 @@ namespace WowBot
 
             // Handle random BG
             if (bg == 100) // Hard coded, 100 means random arena
-                bg = new Random().Next(3);
+                bg = (playerLevel < 20) ? 0 : (playerLevel < 51) ? rand.Next(2) : rand.Next(3);
             Console.WriteLine($"Playing BG: {bg}");
 
             // Set correct bgTimer
@@ -393,37 +391,19 @@ namespace WowBot
 
             // Set BG queue index
             int bgQueueIndex;
-            if (bg == 0)
-            {
-                // WSG
-                if ((!isLowLevel && (otherCTA || abCTA || avCTA)) || isLowLevel && (abCTA || avCTA))
-                    bgQueueIndex = 3;
-                else
-                    bgQueueIndex = 2;
-            }
-            else if (bg == 1)
-            {
-                // AB
-                if ((!isLowLevel && (otherCTA || avCTA)) || isLowLevel && avCTA)
-                    bgQueueIndex = 4;
-                else if (abCTA)
-                    bgQueueIndex = 2;
-                else
-                    bgQueueIndex = 3;
-            }
-            else
-            {
-                // AV
-                if (!isLowLevel && otherCTA)
-                    bgQueueIndex = 5;
-                else if (avCTA)
-                    bgQueueIndex = 2;
-                else
-                    bgQueueIndex = 4;
-            }
 
-            if (level < 20)
+            if (playerLevel < 20)
                 bgQueueIndex = 3;
+            else if (playerLevel < 51)
+                bgQueueIndex = (bg == 0 && !abCTA) || (bg == 1 && abCTA) ? 3 : 4;
+            else if (playerLevel < 61)
+                bgQueueIndex = (bg == 0 && !abCTA && !avCTA) ? 3 : (bg == 1 && avCTA) || (bg == 2 && avCTA) ? 5 : 4;
+            else if (playerLevel < 71)
+                bgQueueIndex = (bg == 0 && !abCTA && !avCTA && !eyeCTA) ? 2 : (bg == 1 && (avCTA || eyeCTA)) || (bg == 2 && avCTA) ? 4 : 3;
+            else
+                bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
+                       bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
+                                 (otherCTA ? 5 : avCTA ? 2 : 4);
 
             // Join BG
             inputManager.SelectBg(bgQueueIndex);
