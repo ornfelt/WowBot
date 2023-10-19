@@ -28,8 +28,8 @@ namespace WowBot
                 while (true)
                 {
                     botStarter.StartBotIfNotRunning();
-                    inputManager.SendEnter(); // Get rid of crash message if any
-                    inputManager.SendEnter(); // Get rid of crash message if any
+                    inputManager.SendEnterInWow(); // Get rid of crash message if any
+                    inputManager.SendEnterInWow(); // Get rid of crash message if any
                     System.Threading.Thread.Sleep(300000); // 300000 milliseconds = 5 minutes
                 }
             }

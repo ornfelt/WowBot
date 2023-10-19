@@ -112,6 +112,12 @@ namespace WowBot
 
         internal void SendEnter()
         {
+            System.Windows.Forms.SendKeys.SendWait("{ENTER}");
+            Thread.Sleep(200);
+        }
+
+        internal void SendEnterInWow()
+        {
             if (!WindowFinder.GetCurrentWindow().Contains("World of Warcraft"))
                 return;
             System.Windows.Forms.SendKeys.SendWait("{ENTER}");
