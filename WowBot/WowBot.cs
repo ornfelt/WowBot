@@ -379,7 +379,6 @@ namespace WowBot
             // Handle random BG
             if (bg == 100) // Hard coded, 100 means random arena
                 bg = (playerLevel < 20) ? 0 : (playerLevel < 51) ? rand.Next(2) : rand.Next(3);
-            Console.WriteLine($"Playing BG: {bg}");
 
             // Set correct bgTimer
             if (bg == 0)
@@ -393,18 +392,23 @@ namespace WowBot
             int bgQueueIndex;
 
             if (playerLevel < 20)
-                bgQueueIndex = 3;
+                bgQueueIndex = 2;
             else if (playerLevel < 51)
-                bgQueueIndex = (bg == 0 && !abCTA) || (bg == 1 && abCTA) ? 3 : 4;
+                bgQueueIndex = (bg == 0 && !abCTA) || (bg == 1 && abCTA) ? 2 : 3;
             else if (playerLevel < 61)
-                bgQueueIndex = (bg == 0 && !abCTA && !avCTA) ? 3 : (bg == 1 && avCTA) || (bg == 2 && avCTA) ? 5 : 4;
+                bgQueueIndex = bg == 0 ? (!abCTA && !avCTA ? 2 : 3) :
+                       bg == 1 ? (abCTA ? 2 : 3) :
+                                 (avCTA ? 2 : 4);
             else if (playerLevel < 71)
-                bgQueueIndex = (bg == 0 && !abCTA && !avCTA && !eyeCTA) ? 2 : (bg == 1 && (avCTA || eyeCTA)) || (bg == 2 && avCTA) ? 4 : 3;
+                bgQueueIndex = bg == 0 ? (!abCTA && !avCTA && !eyeCTA ? 2 : 3) :
+                       bg == 1 ? (abCTA ? 2 : (eyeCTA || avCTA ? 4 : 3)) :
+                                 (avCTA ? 2 : (eyeCTA ? 5 : 4));
             else
                 bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
                        bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
                                  (otherCTA ? 5 : avCTA ? 2 : 4);
 
+            Console.WriteLine($"Queueing for bg: {bg}, bgQueueIndex: {bgQueueIndex}");
             // Join BG
             inputManager.SelectBg(bgQueueIndex);
             inputManager.JoinBattlefield(0, isGroup);
