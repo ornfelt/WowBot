@@ -391,6 +391,7 @@ namespace WowBot
             // Set BG queue index
             int bgQueueIndex;
 
+            // This works 90% of the time
             if (playerLevel < 20)
                 bgQueueIndex = 2;
             else if (playerLevel < 51)
@@ -407,7 +408,6 @@ namespace WowBot
                 bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
                        bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
                                  (otherCTA ? 5 : avCTA ? 2 : 4);
-
             Console.WriteLine($"Queueing for bg: {bg}, bgQueueIndex: {bgQueueIndex}");
             // Join BG
             inputManager.SelectBg(bgQueueIndex);
