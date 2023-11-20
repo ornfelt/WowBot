@@ -35,9 +35,10 @@ public class WowTabFinder {
     
     public WowTabFinder() {
     }
-    
-    public static void focusWindow(String windowName) {
-    	focusWindowByName(windowName);
+	
+	public static void showWowWindow() {
+		// Doesn't work that well with workspaces in X11 / Hyprland
+    	//focusWindowByName("World of Warcraft");
     }
     
     private static void focusWindowByName(String windowNameToFocus) {

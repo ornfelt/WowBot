@@ -15,43 +15,43 @@ import java.util.Random;
 
 import java.sql.*;
 
-//class MousePos {
-//	  final int x;
-//	  final int y;
-//	  MousePos(int x, int y) {this.x=x;this.y=y;}
-//}
+class MousePos {
+	  final int x;
+	  final int y;
+	  MousePos(int x, int y) {this.x=x;this.y=y;}
+}
 
 public class WowBot {
 	
 	/* Variables needed for Robot */
-	private Robot r;
-	private InputManager inputManager;
-	Random rand;
-	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yy/MM/dd");
-	LocalDateTime now;
+	private static Robot r;
+	private static InputManager inputManager;
+	private static Random rand;
+	private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yy/MM/dd");
+	private static LocalDateTime now;
 
-	// Configuration
-	//private MousePos arena2v2 = new MousePos(240, 320);
-	//private MousePos arena3v3 = new MousePos(240, 335);
-	//private MousePos arena5v5 = new MousePos(240, 350);
-	//private MousePos queueJoin = new MousePos(290, 505);
-	//private MousePos queueAccept = new MousePos(710, 220);
-	//private MousePos bgPress = new MousePos(200, 530);
-	//private MousePos bg1 = new MousePos(240, 240);
-	//private MousePos bg2 = new MousePos(240, 250);
-	//private MousePos bg3 = new MousePos(240, 260);
-	//private MousePos bg4 = new MousePos(240, 280);
-	//private MousePos lowLevelWsg = new MousePos(240, 220);
-	//private MousePos acceptRess = new MousePos(730, 220);
+	// Configuration (mouse clicks not used anymore)
+	private static MousePos arena2v2;
+	private static MousePos arena3v3;
+	private static MousePos arena5v5;
+	private static MousePos queueJoin;
+	private static MousePos queueAccept;
+	private static MousePos bgPress;
+	private static MousePos bg1;
+	private static MousePos bg2;
+	private static MousePos bg3;
+	private static MousePos bg4;
+	private static MousePos lowLevelWsg;
+	private static MousePos acceptRess;
 
 	// Timers
-	private static final int WSGTIMER = 1900;
-	private static final int ABTIMER = 1600;
-	private static final int AVTIMER = 2700;
-	private static final int WSGTURNTIMERALLY = 495;
-	private static final int WSGTURNTIMERHORDE = 455;
-	private static final int AVTURNTIMERALLY = 150;
-	private static final int AVTURNTIMERHORDE = 80;
+	private static final int WSGTIMER = 1700;
+	private static final int ABTIMER = 1500;
+	private static final int AVTIMER = 2650;
+	private static int wsgTurnTimerAlly;
+	private static int wsgTurnTimerHorde;
+	private static int avTurnTimerAlly;
+	private static int avTurnTimerHorde;
 	
 	// Settings
 	private static boolean isAcore = false; // AzerothCore / TrinityCore
@@ -77,6 +77,7 @@ public class WowBot {
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
 	
 	public WowBot() {
+        initSettings();
 		rand = new Random();
 		try {
 			r = new Robot();
@@ -91,7 +92,45 @@ public class WowBot {
 		//clipboard.setContents(stringSelection, null);
 	}
 	
-	void setServer() {
+	private static void initSettings() {
+        if (isLinux) {
+            arena2v2 = new MousePos(240, 408);
+            arena3v3 = new MousePos(240, 420);
+            arena5v5 = new MousePos(240, 440);
+            queueJoin = new MousePos(290, 662);
+            queueAccept = new MousePos(850, 265);
+            bgPress = new MousePos(180, 695);
+            bg1 = new MousePos(240, 285);
+            bg2 = new MousePos(240, 308);
+            bg3 = new MousePos(240, 330);
+            bg4 = new MousePos(240, 340);
+            lowLevelWsg = new MousePos(240, 270);
+            acceptRess = new MousePos(900, 265);
+            wsgTurnTimerAlly = 500;
+            wsgTurnTimerHorde = 450;
+            avTurnTimerAlly = 130;
+            avTurnTimerHorde = 70;
+        } else {
+            arena2v2 = new MousePos(240, 320);
+            arena3v3 = new MousePos(240, 335);
+            arena5v5 = new MousePos(240, 350);
+            queueJoin = new MousePos(290, 505);
+            queueAccept = new MousePos(710, 220);
+            bgPress = new MousePos(200, 530);
+            bg1 = new MousePos(240, 240);
+            bg2 = new MousePos(240, 250);
+            bg3 = new MousePos(240, 260);
+            bg4 = new MousePos(240, 280);
+            lowLevelWsg = new MousePos(240, 220);
+            acceptRess = new MousePos(730, 220);
+            wsgTurnTimerAlly = 495;
+            wsgTurnTimerHorde = 455;
+            avTurnTimerAlly = 150;
+            avTurnTimerHorde = 80;
+        }
+	}
+	
+	private static void setServer() {
 		// Maybe set isAcore here?
         String server = "127.0.0.1";
         int port = 8085;
@@ -216,7 +255,6 @@ public class WowBot {
 				if (!resultSet.next()) {
 					System.out.println("Player still not logged in. Trying to log in once more...");
 					r.delay(1000);
-					inputManager.sendKey(KeyEvent.VK_ENTER);
 					tryLogin();
 					// Execute SQL again
 					resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
@@ -499,7 +537,7 @@ public class WowBot {
 			r.delay(1000);
 
 			// Turn slightly in WSG beginning
-			inputManager.sendKey(KeyEvent.VK_A, isAlly ? WSGTURNTIMERALLY : WSGTURNTIMERHORDE);
+			inputManager.sendKey(KeyEvent.VK_A, isAlly ? wsgTurnTimerAlly : wsgTurnTimerHorde);
 
 			r.delay(500);
 			inputManager.sendKey(KeyEvent.VK_W, 1500);
@@ -515,7 +553,7 @@ public class WowBot {
 					inputManager.sendKey(KeyEvent.VK_A, 100);
 				} else if (bg == 2 && i == 4) {
 					r.delay(100);
-					inputManager.sendKey(KeyEvent.VK_D, isAlly ? AVTURNTIMERALLY : AVTURNTIMERHORDE);
+					inputManager.sendKey(KeyEvent.VK_D, isAlly ? avTurnTimerAlly : avTurnTimerHorde);
 				}
 			}
 		}

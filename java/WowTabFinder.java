@@ -22,7 +22,7 @@ public class WowTabFinder {
         int SW_SHOW = 1;
     }
 	
-	//change focused window to S1
+	//change focused window to WoW
 	public static void showWowWindow() {
 		User32 user32 = User32.instance;  
         HWND hWnd = user32.FindWindow(null, "World of Warcraft"); // sets focus to wow 
