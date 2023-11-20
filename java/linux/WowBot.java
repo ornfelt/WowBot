@@ -54,7 +54,7 @@ public class WowBot {
 	private static final int AVTURNTIMERHORDE = 70;
 	
 	// Settings
-	private static boolean isAcore = true; // AzerothCore / TrinityCore
+	private static boolean isAcore = false; // AzerothCore / TrinityCore
 	private static boolean isLinux = true; // Linux / Windows
 
 	private static boolean isArena = false; // Start with BG when random
@@ -216,7 +216,6 @@ public class WowBot {
 				if (!resultSet.next()) {
 					System.out.println("Player still not logged in. Trying to log in once more...");
 					r.delay(1000);
-					inputManager.sendKey(KeyEvent.VK_ENTER);
 					tryLogin();
 					// Execute SQL again
 					resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
