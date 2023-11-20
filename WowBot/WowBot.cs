@@ -13,34 +13,35 @@ namespace WowBot
         /* Variables needed for Robot */
         private readonly InputManager inputManager;
         private static Random rand = new Random();
-        DateTimeFormatInfo dtf = new DateTimeFormatInfo { ShortDatePattern = "yy/MM/dd" };
-        DateTime now;
+        private static DateTimeFormatInfo dtf = new DateTimeFormatInfo { ShortDatePattern = "yy/MM/dd" };
+        private static DateTime now;
 
-        // Configuration
-        //private MousePos arena2v2 = new MousePos(240, 320);
-        //private MousePos arena3v3 = new MousePos(240, 335);
-        //private MousePos arena5v5 = new MousePos(240, 350);
-        //private MousePos queueJoin = new MousePos(300, 500);
-        //private MousePos queueAccept = new MousePos(680, 225);
-        //private MousePos bgPress = new MousePos(210, 525);
-        //private MousePos bg1 = new MousePos(240, 235);
-        //private MousePos bg2 = new MousePos(240, 250);
-        //private MousePos bg3 = new MousePos(240, 265);
-        //private MousePos bg4 = new MousePos(240, 280);
-        //private MousePos lowLevelWsg = new MousePos(240, 220);
-        //private MousePos acceptRess = new MousePos(680, 265);
+        // Configuration (mouse clicks not used anymore)
+        private MousePos arena2v2;
+        private MousePos arena3v3;
+        private MousePos arena5v5;
+        private MousePos queueJoin;
+        private MousePos queueAccept;
+        private MousePos bgPress;
+        private MousePos bg1;
+        private MousePos bg2;
+        private MousePos bg3;
+        private MousePos bg4;
+        private MousePos lowLevelWsg;
+        private MousePos acceptRess;
 
         // Timers
-        private const int WSGTIMER = 1900;
-        private const int ABTIMER = 1600;
-        private const int AVTIMER = 2700;
-        private const int WSGTURNTIMERALLY = 500;
-        private const int WSGTURNTIMERHORDE = 450;
-        private const int AVTURNTIMERALLY = 130;
-        private const int AVTURNTIMERHORDE = 70;
+        private const int WSGTIMER = 1700;
+        private const int ABTIMER = 1500;
+        private const int AVTIMER = 2650;
+        private int WsgTurnTimerAlly;
+        private int WsgTurnTimerHorde;
+        private int AvTurnTimerAlly;
+        private int AvTurnTimerHorde;
 
         // Settings
-        private readonly bool isAcore = true; // AzerothCore / TrinityCore
+        private readonly bool isAcore = true; // AzerothCore or TrinityCore
+        private readonly bool isLinux = false; // Linux or Windows
         private static bool isArena = false; // Start with BG when random
         private static bool isGroup = false; // If group queue (BG only)
         private static bool otherCTA = false; // If other BG than WSG, AB, AV is call to arms 
@@ -52,6 +53,8 @@ namespace WowBot
         private static int bgCount = 0; // Keep track of how many BGs / arenas that have been played
         private static int bgCountMax = 6; // Max amount of bgCount before switching to BG / arena
         private static string bgInput = "ra"; // Both random BGs and arena
+        //private static String bgInput = "r"; // Random BGs
+        //private static String bgInput = "a"; // Random arenas
         private const string bgTeleSpotHorde = "silvermooncity";
         private const string bgTeleSpotAlly = "exodar";
 
@@ -60,12 +63,33 @@ namespace WowBot
 
         internal WowBot(bool isAcore, InputManager inputManager)
         {
+            InitSettings();
             rand = new Random();
             this.inputManager = inputManager;
             this.isAcore = isAcore;
         }
 
-        void SetCTA()
+        private void InitSettings()
+        {
+            arena2v2 = new MousePos(240, 320);
+            arena3v3 = new MousePos(240, 335);
+            arena5v5 = new MousePos(240, 350);
+            queueJoin = new MousePos(300, 500);
+            queueAccept = new MousePos(680, 225);
+            bgPress = new MousePos(210, 525);
+            bg1 = new MousePos(240, 235);
+            bg2 = new MousePos(240, 250);
+            bg3 = new MousePos(240, 265);
+            bg4 = new MousePos(240, 280);
+            lowLevelWsg = new MousePos(240, 220);
+            acceptRess = new MousePos(680, 265);
+            WsgTurnTimerAlly = 500;
+            WsgTurnTimerHorde = 450;
+            AvTurnTimerAlly = 130;
+            AvTurnTimerHorde = 70;
+        }
+
+        private void SetCTA()
         {
             // Calculate current call to arms
             // select * from game_event where holiday in (283, 284, 285, 353, 400, 420);
@@ -128,11 +152,10 @@ namespace WowBot
                     connection = new MySqlConnection("Server=localhost;Database=characters;User ID=trinity;Password=trinity;");
                 connection.Open();
 
-                int accountId = 1;
+                //int accountId = 1;
                 //MySqlCommand command = new MySqlCommand($"select name, race, level from characters where online = 1 and account = {accountId}", connection);
                 MySqlCommand command = new MySqlCommand($"select name, race, level from characters where online = 1", connection);
                 MySqlDataReader reader = command.ExecuteReader();
-
                 string race = "";
 
                 // Check if player isn't logged in
@@ -248,8 +271,9 @@ namespace WowBot
         void StartArenaBot(int arenaId)
         {
             int timeInBg = 0;
-            int bgTimer = 250;
             int maxActionTime = 45;
+            int bgTimer = 300;
+
             Thread.Sleep(1000);
             // Teleport to arena NPC
             inputManager.SendEnter();
@@ -260,7 +284,7 @@ namespace WowBot
                 inputManager.SendKeys(".go creature 4762"); // select guid from creature where id1=19912; (id from arena npc from wowhead)
             inputManager.SendEnter();
 
-            Thread.Sleep(7000);
+            Thread.Sleep(5000);
             // /target arena char and interact with him
             inputManager.SendEnter();
             Thread.Sleep(200);
@@ -271,18 +295,19 @@ namespace WowBot
             inputManager.SendEnter();
             Thread.Sleep(700);
             inputManager.SendKey(Keys.D9);
-            Thread.Sleep(2000);
+            Thread.Sleep(1300);
 
             if (arenaId == 100) // Hard coded, 100 means random arena
                 arenaId = new Random().Next(3) + 1;
 
-            Console.WriteLine($"Playing arena: {arenaId}");
-
             if (arenaId == 3) // Extend bgTimer slightly for 5v5
                 bgTimer += 50;
 
+            Console.WriteLine($"Playing arena: {arenaId}");
             inputManager.JoinBattlefield(arenaId, isGroup);
-            inputManager.ClickPopup();
+            Thread.Sleep(1000);
+            inputManager.ClickPopup(); // Accept queue
+            Thread.Sleep(5000);
 
             // Wait for arena to start...
             for (int i = 0; i < 5; i++)
@@ -337,20 +362,16 @@ namespace WowBot
                 }
 
                 Thread.Sleep(1500);
-
                 if (timeInBg < maxActionTime)
                 {
                     // Use R spell
                     inputManager.SendKeys("r");
-
-                    // Use 2
                     Thread.Sleep(500);
+                    // Use 2
                     inputManager.SendKeys("2");
                     Thread.Sleep(500);
-
                     // Use shift-w
                     inputManager.SendKeyWithShift(Keys.W);
-                    Thread.Sleep(200);
                 }
 
                 timeInBg += 11;
@@ -373,14 +394,13 @@ namespace WowBot
                 inputManager.SendKeys(".tele " + bgTeleSpotHorde);
             Thread.Sleep(100);
             inputManager.SendEnter();
-
             Thread.Sleep(5000);
 
             // Handle random BG
             if (bg == 100) // Hard coded, 100 means random arena
                 bg = (playerLevel < 20) ? 0 : (playerLevel < 51) ? rand.Next(2) : rand.Next(3);
 
-            // Set correct bgTimer
+            // Set BG timer
             if (bg == 0)
                 bgTimer = WSGTIMER;
             else if (bg == 1)
@@ -408,11 +428,14 @@ namespace WowBot
                 bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
                        bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
                                  (otherCTA ? 5 : avCTA ? 2 : 4);
+
             Console.WriteLine($"Queueing for bg: {bg}, bgQueueIndex: {bgQueueIndex}");
+
             // Join BG
             inputManager.SelectBg(bgQueueIndex);
             inputManager.JoinBattlefield(0, isGroup);
             inputManager.ClickPopup(); // Accept queue
+            Thread.Sleep(7000);
 
             // Wait for BG to start...
             if (bg == 0)
@@ -425,7 +448,7 @@ namespace WowBot
 
                 // Turn slightly in WSG beginning
                 inputManager.SendKeys("a");
-                inputManager.SendKey(Keys.A, isAlly ? WSGTURNTIMERALLY : WSGTURNTIMERHORDE);
+                inputManager.SendKey(Keys.A, isAlly ? WsgTurnTimerAlly : WsgTurnTimerHorde);
 
                 Thread.Sleep(500);
                 inputManager.SendKey(Keys.W, 1500);
@@ -437,18 +460,13 @@ namespace WowBot
                 {
                     Thread.Sleep(9000);
                     inputManager.SendKey(Keys.W, 1000);
+                    Thread.Sleep(100);
 
                     // Turn slightly in AV beginning
                     if (bg == 2 && i == 0)
-                    {
-                        Thread.Sleep(100);
                         inputManager.SendKey(Keys.A, 100);
-                    }
                     else if (bg == 2 && i == 4)
-                    {
-                        Thread.Sleep(100);
-                        inputManager.SendKey(Keys.D, isAlly ? AVTURNTIMERALLY : AVTURNTIMERHORDE);
-                    }
+                        inputManager.SendKey(Keys.D, isAlly ? AvTurnTimerAlly : AvTurnTimerHorde);
                 }
             }
 
@@ -467,16 +485,13 @@ namespace WowBot
 
                 // 20 % chance of jumping, else use spell (scroll down)
                 if (rand.Next(4) == 0)
-                {
                     inputManager.SendKeys("{SPACE}");
-                    Thread.Sleep(500);
-                }
                 else
                 {
                     // Simulate mouse wheel scroll (you might need a different approach or library for this)
                 }
 
-                Thread.Sleep(1500);
+                Thread.Sleep(2000);
                 inputManager.SendKey(Keys.W, 200);
 
                 // 50 % chance of turning left / right
@@ -484,20 +499,25 @@ namespace WowBot
                 {
                     if (rand.Next(2) == 0)
                     {
+                        //Console.WriteLine("Turning left");
                         inputManager.SendKey(Keys.A, 500);
+                        // 50 % chance of turning some more
                         Thread.Sleep(100);
                         if (rand.Next(2) == 0)
-                            inputManager.SendKey(Keys.A, 300);
+                            inputManager.SendKey(Keys.A, 200);
                         else
+                            // Else use 2
                             inputManager.SendKeys("2");
                     }
                     else
                     {
+                        //Console.WriteLine("Turning right");
                         inputManager.SendKey(Keys.D, 500);
                         Thread.Sleep(100);
                         if (rand.Next(2) == 0)
-                            inputManager.SendKey(Keys.D, 300);
+                            inputManager.SendKey(Keys.D, 200);
                         else
+                            // Else use 4
                             inputManager.SendKeys("4");
                     }
                 }
@@ -507,19 +527,19 @@ namespace WowBot
                 {
                     Thread.Sleep(500);
                     inputManager.ClickPopup();
-                    // Wait 30 sec
-                    Thread.Sleep(12000);
+                    // Wait ~30 sec
+                    Thread.Sleep(13000);
                     inputManager.SendKeys("w");
                     Thread.Sleep(15000);
                     timeInBg += 30;
-                    // Also use shift-w
+                    // Use shift-w
                     inputManager.SendKeyWithShift(Keys.W);
                 }
                 timeInBg += 14;
 
                 // Use R spell
                 inputManager.SendKeys("r");
-                Thread.Sleep(200);
+                //Console.WriteLine("End of loop... timeInBg: " + timeInBg + ", bgTimer: " + bgTimer);
             }
             if (bg == 2)
                 Console.WriteLine($"End of AV loop... timeInBg: {timeInBg}");

@@ -54,8 +54,8 @@ public class WowBot {
 	private static int avTurnTimerHorde;
 	
 	// Settings
-	private static boolean isAcore = false; // AzerothCore / TrinityCore
-	private static boolean isLinux = false; // Linux / Windows
+	private static boolean isAcore = true; // AzerothCore or TrinityCore
+	private static boolean isLinux = false; // Linux or Windows
 	
 	private static boolean isArena = false; // Start with BG when random
 	private static boolean isGroup = false; // If group queue (BG only)
@@ -401,9 +401,11 @@ public class WowBot {
 		if (arenaId == 100) // Hard coded, 100 means random arena
 			arenaId = rand.nextInt(3)+1;
 		
+		if (arenaId == 3) // Extend bgTimer slightly for 5v5
+			bgTimer += 50;
+		
 		System.out.println("Playing arena: " + arenaId);
 		inputManager.joinBattlefield(arenaId, isGroup);
-
 		r.delay(1000);
 		inputManager.clickPopup(); // Accept queue
 		r.delay(5000);
@@ -435,31 +437,28 @@ public class WowBot {
 				inputManager.mousescroll(i);
 
 			r.delay(1500); // 1.5s delay
-
 			if (timeInBg < maxActionTime)
 				inputManager.sendKey(KeyEvent.VK_W);
-
 			r.delay(1500);
+			
 			// Use E or 4 spell
 			if (timeInBg < maxActionTime) {
 				if (rand.nextInt(2) == 0) {
 					inputManager.sendKey(KeyEvent.VK_T);
-					r.delay(500);
 					inputManager.sendKey(KeyEvent.VK_E);
 				}
 				else
 					inputManager.sendKey(KeyEvent.VK_4);
-				r.delay(200);
 			}
 
-			r.delay(1000);
+			r.delay(1500);
 			if (timeInBg < maxActionTime) {
 				// Use R spell
 				inputManager.sendKey(KeyEvent.VK_R);
 				r.delay(500);
 				// Use 2
 				inputManager.sendKey(KeyEvent.VK_2);
-				r.delay(580);
+				r.delay(500);
 				// Use shift-w
 				inputManager.sendKeyWithShift(KeyEvent.VK_W);
 			}
@@ -546,15 +545,13 @@ public class WowBot {
 			for (int i = 0; i < 5; i++) {
 				r.delay(9000);
 				inputManager.sendKey(KeyEvent.VK_W, 1000);
-
+				r.delay(100);
+				
 				// Turn slightly in AV beginning
-				if (bg == 2 && i == 0) {
-					r.delay(100);
+				if (bg == 2 && i == 0)
 					inputManager.sendKey(KeyEvent.VK_A, 100);
-				} else if (bg == 2 && i == 4) {
-					r.delay(100);
+				else if (bg == 2 && i == 4)
 					inputManager.sendKey(KeyEvent.VK_D, isAlly ? avTurnTimerAlly : avTurnTimerHorde);
-				}
 			}
 		}
 		
@@ -566,12 +563,11 @@ public class WowBot {
 			// Auto run
 			r.delay(500);
 			inputManager.sendKeyWithAlt(KeyEvent.VK_X);
-			
 			r.delay(9000);
 			inputManager.sendKey(KeyEvent.VK_T);
-			r.delay(400);
+			r.delay(500);
+			
 			// 20 % chance of jumping, else use spell (scroll down)
-			//if (rand.nextInt(10) == 0) // 10 % chance
 			if (rand.nextInt(4) == 0)
 				inputManager.sendKey(KeyEvent.VK_SPACE);
 			else
@@ -609,13 +605,10 @@ public class WowBot {
 			
 			// 30 % chance of inputManager.clicking release and wait for 30 sec
 			if (rand.nextInt(3) == 0) {
-				//System.out.println("Trying to release... Loop count: " + i);
-				// First try to accept ress from someone, then try to release
 				r.delay(500);
 				inputManager.clickPopup();
-				r.delay(1000);
 				// Wait ~30 sec
-				r.delay(12000);
+				r.delay(13000);
 				inputManager.sendKey(KeyEvent.VK_W);
 				r.delay(15000);
 				timeInBg += 30;

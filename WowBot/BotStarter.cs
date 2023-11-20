@@ -81,7 +81,7 @@ namespace WowBot
                     connection = new MySqlConnection("Server=localhost;Database=characters;User ID=trinity;Password=trinity;");
                 connection.Open();
 
-                int accountId = 1;
+                //int accountId = 1;
                 //MySqlCommand command = new MySqlCommand($"select name, race, level from characters where online = 1 and account = {accountId}", connection);
                 MySqlCommand command = new MySqlCommand($"select name, race, level from characters where online = 1", connection);
                 MySqlDataReader reader = command.ExecuteReader();
