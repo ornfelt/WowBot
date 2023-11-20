@@ -16,7 +16,7 @@ import java.io.InputStreamReader;
 // JNA platform download:
 // https://github.com/java-native-access/jna#download
 
-public class wowtabfinder {
+public class WowTabFinder {
 	
 	public interface Xlib extends Library {
 	    Xlib INSTANCE = (Xlib) Native.load("X11", Xlib.class);
@@ -33,7 +33,7 @@ public class wowtabfinder {
 	    int XFree(Pointer data);
 	}
     
-    public wowtabfinder() {
+    public WowTabFinder() {
     }
     
     public static void focusWindow(String windowName) {

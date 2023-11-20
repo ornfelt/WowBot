@@ -21,11 +21,11 @@ import java.sql.*;
 //	  MousePos(int x, int y) {this.x=x;this.y=y;}
 //}
 
-public class wowbot {
+public class WowBot {
 	
 	/* Variables needed for Robot */
 	private Robot r;
-	private inputmanager inputManager;
+	private InputManager inputManager;
 	Random rand;
 	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yy/MM/dd");
 	LocalDateTime now;
@@ -76,14 +76,14 @@ public class wowbot {
 	// Horde races
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
     
-	public wowbot() {
+	public WowBot() {
 		rand = new Random();
 		try {
 			r = new Robot();
 		} catch (AWTException e) {
 			e.printStackTrace();
 		}
-		inputManager = new inputmanager(r, isLinux);
+		inputManager = new InputManager(r, isLinux);
 		
 		//String myString = "DONE";
 		//StringSelection stringSelection = new StringSelection(myString);

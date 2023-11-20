@@ -7,7 +7,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-public class inputmanager {
+public class InputManager {
 	
 	private Robot r;
 	private final static String wowName = "World of Warcraft";
@@ -19,13 +19,13 @@ public class inputmanager {
         battlegroundNames.put(2, "Alterac Valley");
     }
 	
-	public inputmanager(Robot robot, boolean isLinux) {
+	public InputManager(Robot robot, boolean isLinux) {
 		r = robot;
 		this.isLinux = isLinux;
 	}
 	
 	void joinBattlefield(int index, boolean isGroup) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		sendKey(KeyEvent.VK_ENTER);
 		sendKeys("/run JoinBattlefield(" + index + "," + (isGroup ? "1" : "0") + ")");
@@ -33,7 +33,7 @@ public class inputmanager {
 	}
 
 	void togglePVPFrame() {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		sendKey(KeyEvent.VK_ENTER);
 		sendKeys("/run TogglePVPFrame()");
@@ -69,7 +69,7 @@ public class inputmanager {
 	}
 	
 	void clickPopup() {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		sendKey(KeyEvent.VK_ENTER);
 		sendKeys("/click StaticPopup1Button1");
@@ -78,7 +78,7 @@ public class inputmanager {
 
 	// Execute specific key
 	void sendKey(int key) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.keyPress(key);
 		r.delay(60);
@@ -87,7 +87,7 @@ public class inputmanager {
 	}
 
 	void sendKey(int key, int delay) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.keyPress(key);
 		r.delay(delay);
@@ -96,7 +96,7 @@ public class inputmanager {
 	}
 
 	void sendKeyWithShift(int key) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.keyPress(KeyEvent.VK_SHIFT);
 		r.delay(30);
@@ -109,7 +109,7 @@ public class inputmanager {
 	}
 
 	void sendKeyWithCtrl(int key) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.keyPress(KeyEvent.VK_CONTROL);
 		r.delay(30);
@@ -122,7 +122,7 @@ public class inputmanager {
 	}
 
 	void sendKeyWithAlt(int key) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.keyPress(KeyEvent.VK_ALT);
 		r.delay(30);
@@ -136,7 +136,7 @@ public class inputmanager {
 	
 	// Execute the characters in string key 
 	void sendKeys(String keys) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 	    for (char c : keys.toCharArray()) {
 	    	if(c == 'Å') {
@@ -270,20 +270,20 @@ public class inputmanager {
 	}
 
 	void mousemove(int x, int y) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.mouseMove(x, y);    
 	}
 	
 	void mousescroll(int dir) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.mouseWheel(dir);
 	}
 
 	// Click on the screen with Robot 
 	void click() {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.delay(500);
 		r.mousePress(InputEvent.BUTTON1_DOWN_MASK);

@@ -1,12 +1,12 @@
 package wowbot;
 
-public class main {
+public class Main {
 	
 	public static void main(String[] args)
 	{
 		// Start BOT
 		System.out.println("Starting wowbot!");
-		wowbot bot = new wowbot();
+		WowBot bot = new WowBot();
 		bot.startBot();
 	}
 }
