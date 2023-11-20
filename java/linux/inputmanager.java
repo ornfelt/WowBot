@@ -4,12 +4,20 @@ import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 public class inputmanager {
 	
 	private Robot r;
 	private final static String wowName = "World of Warcraft";
 	private boolean isLinux = false;
+	private static Map<Integer, String> battlegroundNames = new HashMap<>();
+    static {
+        battlegroundNames.put(0, "Warsong Gulch");
+        battlegroundNames.put(1, "Arathi Basin");
+        battlegroundNames.put(2, "Alterac Valley");
+    }
 	
 	public inputmanager(Robot robot, boolean isLinux) {
 		r = robot;

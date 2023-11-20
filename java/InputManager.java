@@ -162,11 +162,11 @@ public class InputManager {
 					keyPress('/');
 	    		else
 					sendKeyWithShift(KeyEvent.VK_7);
-	    	}else if (c == '(' && !isLinux) {
+	    	}else if (c == '(' && isLinux) {
 				sendKeyWithShift(KeyEvent.VK_8);
-	    	}else if (c == ')' && !isLinux) {
+	    	}else if (c == ')' && isLinux) {
 				sendKeyWithShift(KeyEvent.VK_9);
-	    	}else if (c == '=' && !isLinux) {
+	    	}else if (c == '=' && isLinux) {
 				sendKeyWithShift(KeyEvent.VK_0);
 	    	}else if (c == ':') {
 	    		keyPress(':');
