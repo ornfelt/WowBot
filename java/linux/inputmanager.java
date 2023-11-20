@@ -34,7 +34,7 @@ public class inputmanager {
 	
 	// Use /framestack in-game to find names for buttons / frames
 	void selectBg(int index) {
-		if (!wowtabfinder.GetCurrentWindow().contains(wowName))
+		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		togglePVPFrame();
 		sendKey(KeyEvent.VK_ENTER);
@@ -42,7 +42,16 @@ public class inputmanager {
 		sendKey(KeyEvent.VK_ENTER);
 		r.delay(300);
 		sendKey(KeyEvent.VK_ENTER);
-		sendKeys("/run PVPBattlegroundFrame.selectedBG = " + index);
+		//sendKeys("/run PVPBattlegroundFrame.selectedBG = " + index);
+		// Join through Lua instead
+		String luaScript = "/run for i=1,GetNumBattlegroundTypes() do " +
+                   "local name, x = GetBattlegroundInfo(i) " +
+                   "if name == '" + battlegroundNames.get(index) + "' then " +
+                   //"print(name .. x) " +
+                   "PVPBattlegroundFrame.selectedBG = i " +
+                   "end " +
+                   "end";
+		sendKeys(luaScript);
 		sendKey(KeyEvent.VK_ENTER);
 		r.delay(300);
 		togglePVPFrame();

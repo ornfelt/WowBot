@@ -54,18 +54,19 @@ public class WowBot {
 	private static final int AVTURNTIMERHORDE = 80;
 	
 	// Settings
-	private static boolean isAcore = true; // AzerothCore / TrinityCore
+	private static boolean isAcore = false; // AzerothCore / TrinityCore
 	private static boolean isLinux = false; // Linux / Windows
 	
 	private static boolean isArena = false; // Start with BG when random
 	private static boolean isGroup = false; // If group queue (BG only)
-	private static boolean isLowLevel = false; // If low level (special ordering of BGs)
 	private static boolean otherCTA = false; // If other BG than WSG, AB, AV is call to arms 
 	private static boolean avCTA = false; // If AV is Call To Arms
 	private static boolean abCTA = false; // If AB is Call To Arms
+	private static boolean eyeCTA, strandCTA, isleCTA;
 	private static boolean isAlly = false; // Faction
 	private static int bgCount = 0; // Keep track of how many BGs / arenas that have been played
 	private static int bgCountMax = 6; // Max amount of bgCount before switching to BG / arena
+	private static int playerLevel = 0; // Player level
 	private static String bgInput = "ra"; // Both random BGs and arena
 	//private static String bgInput = "r"; // Random BGs
 	//private static String bgInput = "a"; // Random arenas
@@ -128,15 +129,15 @@ public class WowBot {
 		System.out.println("AB CTA: " + abCTA);
 
 		// EYE: 353
-        boolean eyeCTA = checkCTA("2010-04-30 18:00:00", occurence, length);
+        eyeCTA = checkCTA("2010-04-30 18:00:00", occurence, length);
 		System.out.println("EYE CTA: " + eyeCTA);
 
 		// Strand: 400
-		boolean strandCTA = checkCTA("2010-04-09 18:00:00", occurence, length);
+		strandCTA = checkCTA("2010-04-09 18:00:00", occurence, length);
 		System.out.println("Strand CTA: " + strandCTA);
 
 		// Isle: 420
-		boolean isleCTA = checkCTA("2010-04-16 18:00:00", occurence, length);
+		isleCTA = checkCTA("2010-04-16 18:00:00", occurence, length);
 		System.out.println("Isle CTA: " + isleCTA);
 		
 		otherCTA = (eyeCTA || strandCTA || isleCTA);
@@ -196,15 +197,22 @@ public class WowBot {
             //ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1 and account = " + accountId);
             ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
             String race = "";
-            int level = 0;
 
-            // Check if player isn't logged in
+            // Ensure player logged in
             if (!resultSet.next()) {
 				System.out.println("Player not logged in. Trying to log in...");
 				tryLogin();
 				// Execute SQL again
 				resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
-				// Try one more time
+				// Try two more times
+				if (!resultSet.next()) {
+					System.out.println("Player still not logged in. Trying to log in again...");
+					r.delay(1000);
+					inputManager.sendKey(KeyEvent.VK_ENTER);
+					tryLogin();
+					// Execute SQL again
+					resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
+				}
 				if (!resultSet.next()) {
 					System.out.println("Player still not logged in. Trying to log in once more...");
 					r.delay(1000);
@@ -221,11 +229,9 @@ public class WowBot {
             //}
 
 			race = resultSet.getString("race").trim();
-			level = resultSet.getInt("level");
+			playerLevel = resultSet.getInt("level");
 			isAlly = !hordeRaces.contains(Integer.parseInt(race));
-			isLowLevel = level < 70;
-			System.out.println("\nrace: " + race + ", level: " + level);
-			System.out.println("isAlly: " + isAlly + ", isLowLevel: " + isLowLevel);
+			System.out.println("\nrace: " + race + ", level: " + playerLevel + ", isAlly: " + isAlly);
 
             resultSet.close();
             statement.close();
@@ -430,12 +436,6 @@ public class WowBot {
 		// Settings
 		int timeInBg = 0;
 		int bgTimer = 0;
-		if (bg == 0)
-			bgTimer = WSGTIMER;
-		else if (bg == 1)
-			bgTimer = ABTIMER;
-		else
-			bgTimer = AVTIMER;
 
 		// Teleport to some place fun
 		inputManager.sendKey(KeyEvent.VK_ENTER);
@@ -446,61 +446,49 @@ public class WowBot {
 			inputManager.sendKeys(".tele " + bgTeleSpotHorde);
 		r.delay(100);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-
 		r.delay(5000);
 		
 		// Handle random BG
 		if (bg == 100) // Hard coded, 100 means random arena
-			bg = rand.nextInt(3);
-		System.out.println("Playing BG: " + bg);
-		int bgQueueIndex = bg;
+			bg = (playerLevel < 20) ? 0 : (playerLevel < 51) ? rand.nextInt(2) : rand.nextInt(3);
 
-		if (bg == 0) {
-			// WSG
-			if (otherCTA || abCTA || avCTA)
-				bgQueueIndex = 3;
-			else
-				bgQueueIndex = 2;
-		} else if (bg == 1) {
-			// AB
-			if (otherCTA || avCTA)
-				bgQueueIndex = 3;
-			else if (abCTA)
-				bgQueueIndex = 2;
-			else
-				bgQueueIndex = 3;
-		} else {
-			// AV
-			if (otherCTA)
-				bgQueueIndex = 5;
-			else if (avCTA)
-				bgQueueIndex = 2;
-			else
-				bgQueueIndex = 4;
-		}
-		// If low level
-		if (isLowLevel) {
-			if (bg == 0)
-				bgQueueIndex = 1;
-			else if (bg == 1) {
-				if (abCTA)
-					bgQueueIndex = 1;
-				else if (avCTA)
-					bgQueueIndex = 3;
-				else
-					bgQueueIndex = 2;
-			} else {
-				if (avCTA)
-					bgQueueIndex = 1;
-				else
-					bgQueueIndex = 3;
-			}
-		}
+		// Set BG timer
+		if (bg == 0)
+			bgTimer = WSGTIMER;
+		else if (bg == 1)
+			bgTimer = ABTIMER;
+		else
+			bgTimer = AVTIMER;
+
+        // Set BG queue index
+        int bgQueueIndex;
+
+		// This works 90% of the time
+		if (playerLevel < 20)
+			bgQueueIndex = 2;
+		else if (playerLevel < 51)
+			bgQueueIndex = (bg == 0 && !abCTA) || (bg == 1 && abCTA) ? 2 : 3;
+		else if (playerLevel < 61)
+			bgQueueIndex = bg == 0 ? (!abCTA && !avCTA ? 2 : 3) :
+				   bg == 1 ? (abCTA ? 2 : 3) :
+							 (avCTA ? 2 : 4);
+		else if (playerLevel < 71)
+			bgQueueIndex = bg == 0 ? (!abCTA && !avCTA && !eyeCTA ? 2 : 3) :
+				   bg == 1 ? (abCTA ? 2 : (eyeCTA || avCTA ? 4 : 3)) :
+							 (avCTA ? 2 : (eyeCTA ? 5 : 4));
+		else
+			bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
+				   bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
+							 (otherCTA ? 5 : avCTA ? 2 : 4);
+
+        System.out.println("Queueing for bg: " + bg + ", bgQueueIndex: " + bgQueueIndex);
 
 		// Join BG
-		inputManager.selectBg(bgQueueIndex);
+		//inputManager.selectBg(bgQueueIndex);
+		inputManager.selectBg(bg); // Use lua instead
 		inputManager.joinBattlefield(0, isGroup);
 		inputManager.clickPopup(); // Accept queue
+		r.delay(7000);
 
 		// Wait for BG to start...
 		if (bg == 0) {

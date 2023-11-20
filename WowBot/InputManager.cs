@@ -38,7 +38,16 @@ namespace WowBot
             SendEnter();
             Thread.Sleep(300);
             SendEnter();
-            SendKeys($"/run PVPBattlegroundFrame.selectedBG = {index}");
+            //SendKeys($"/run PVPBattlegroundFrame.selectedBG = {index}");
+			// Join through Lua instead
+			String luaScript = "/run for i=1,GetNumBattlegroundTypes() do " +
+                   "local name, x = GetBattlegroundInfo(i) " +
+                   "if name == '" + battlegroundNames.get(index) + "' then " +
+                   //"print(name .. x) " +
+                   "PVPBattlegroundFrame.selectedBG = i " +
+                   "end " +
+                   "end";
+			SendKeys(luaScript);
             SendEnter();
             Thread.Sleep(300);
             TogglePVPFrame();

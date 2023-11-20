@@ -4,12 +4,20 @@ import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InputManager {
 	
 	private Robot r;
 	private final static String wowName = "World of Warcraft";
 	private boolean isLinux = false;
+	private static Map<Integer, String> battlegroundNames = new HashMap<>();
+    static {
+        battlegroundNames.put(0, "Warsong Gulch");
+        battlegroundNames.put(1, "Arathi Basin");
+        battlegroundNames.put(2, "Alterac Valley");
+    }
 	
 	public InputManager(Robot robot, boolean isLinux) {
 		r = robot;
@@ -42,7 +50,16 @@ public class InputManager {
 		sendKey(KeyEvent.VK_ENTER);
 		r.delay(300);
 		sendKey(KeyEvent.VK_ENTER);
-		sendKeys("/run PVPBattlegroundFrame.selectedBG = " + index);
+		//sendKeys("/run PVPBattlegroundFrame.selectedBG = " + index);
+		// Join through Lua instead
+		String luaScript = "/run for i=1,GetNumBattlegroundTypes() do " +
+                   "local name, x = GetBattlegroundInfo(i) " +
+                   "if name == '" + battlegroundNames.get(index) + "' then " +
+                   //"print(name .. x) " +
+                   "PVPBattlegroundFrame.selectedBG = i " +
+                   "end " +
+                   "end";
+		sendKeys(luaScript);
 		sendKey(KeyEvent.VK_ENTER);
 		r.delay(300);
 		togglePVPFrame();
