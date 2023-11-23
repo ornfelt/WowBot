@@ -54,7 +54,7 @@ public class WowBot {
 	private static int avTurnTimerHorde;
 	
 	// Settings
-	private static boolean isAcore = false; // AzerothCore or TrinityCore
+	private static boolean isAcore = true; // AzerothCore or TrinityCore
 	private static boolean isLinux = true; // Linux or Windows
 	
 	private static boolean isArena = false; // Start with BG when random
