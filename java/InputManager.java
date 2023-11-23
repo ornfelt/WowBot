@@ -139,18 +139,18 @@ public class InputManager {
 		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 	    for (char c : keys.toCharArray()) {
-	    	if(c == 'Å') {
-	    		keyPress('Å');
-	    	}else if (c == 'Ä') {
-	    		keyPress('Ä');
-	    	}else if (c == 'Ö') {
-	    		keyPress('Ö');
-	    	}else if (c == 'å') {
-	    		keyPress('å');
-	    	}else if (c == 'ä') {
-	    		keyPress('ä');
-	    	}else if (c == 'ö') {
-	    		keyPress('ö');
+	    	if(c == 'Ã…') {
+	    		keyPress('Ã…');
+	    	}else if (c == 'Ã„') {
+	    		keyPress('Ã„');
+	    	}else if (c == 'Ã–') {
+	    		keyPress('Ã–');
+	    	}else if (c == 'Ã¥') {
+	    		keyPress('Ã¥');
+	    	}else if (c == 'Ã¤') {
+	    		keyPress('Ã¤');
+	    	}else if (c == 'Ã¶') {
+	    		keyPress('Ã¶');
 	    	}else if (c == '&') {
 	    		keyPress('&');
 	    	}else if (c == '#') {
@@ -211,12 +211,12 @@ public class InputManager {
 	        case '0': altNumpad("48"); break;
 	        case ':': altNumpad("58"); break;
 	        case '@': altNumpad("64"); break;
-	        case 'å': altNumpad("134"); break;
-	        case 'ä': altNumpad("132"); break;
-	        case 'ö': altNumpad("148"); break;
-	        case 'Å': altNumpad("143"); break;
-	        case 'Ä': altNumpad("142"); break;
-	        case 'Ö': altNumpad("153"); break;
+	        case 'Ã¥': altNumpad("134"); break;
+	        case 'Ã¤': altNumpad("132"); break;
+	        case 'Ã¶': altNumpad("148"); break;
+	        case 'Ã…': altNumpad("143"); break;
+	        case 'Ã„': altNumpad("142"); break;
+	        case 'Ã–': altNumpad("153"); break;
 	        default: return;
 	    }
 	}

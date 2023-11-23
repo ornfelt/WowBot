@@ -54,8 +54,8 @@ public class WowBot {
 	private static int avTurnTimerHorde;
 	
 	// Settings
-	private static boolean isAcore = true; // AzerothCore or TrinityCore
-	private static boolean isLinux = false; // Linux or Windows
+	private static boolean isAcore = false; // AzerothCore or TrinityCore
+	private static boolean isLinux = true; // Linux or Windows
 	
 	private static boolean isArena = false; // Start with BG when random
 	private static boolean isGroup = false; // If group queue (BG only)
@@ -232,9 +232,10 @@ public class WowBot {
 					"trinity", "trinity");
  
             //int accountId = 1;
+			//String sqlQuery = "select name, race, level from characters where online = 1 and account = " + accountId;
+			String sqlQuery = "select name, race, level from characters where online = 1";
             Statement statement = connection.createStatement();
-            //ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1 and account = " + accountId);
-            ResultSet resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
             String race = "";
 
             // Ensure player logged in
@@ -242,7 +243,7 @@ public class WowBot {
 				System.out.println("Player not logged in. Trying to log in...");
 				tryLogin();
 				// Execute SQL again
-				resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
+				resultSet = statement.executeQuery(sqlQuery);
 				// Try two more times
 				if (!resultSet.next()) {
 					System.out.println("Player still not logged in. Trying to log in again...");
@@ -250,16 +251,16 @@ public class WowBot {
 					inputManager.sendKey(KeyEvent.VK_ENTER);
 					tryLogin();
 					// Execute SQL again
-					resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
-				}
-				if (!resultSet.next()) {
-					System.out.println("Player still not logged in. Trying to log in once more...");
-					r.delay(1000);
-					tryLogin();
-					// Execute SQL again
-					resultSet = statement.executeQuery("select name, race, level from characters where online = 1");
-					if (!resultSet.next())
-						System.exit(0);
+					resultSet = statement.executeQuery(sqlQuery);
+					if (!resultSet.next()) {
+						System.out.println("Player still not logged in. Trying to log in once more...");
+						r.delay(1000);
+						tryLogin();
+						// Execute SQL again
+						resultSet = statement.executeQuery(sqlQuery);
+						if (!resultSet.next())
+							System.exit(0);
+					}
 				}
             }
 
@@ -302,7 +303,7 @@ public class WowBot {
 		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(50);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(2000);
+		threadSleep(10000);
 	}
 	
 	// Start BOT
