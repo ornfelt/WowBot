@@ -145,7 +145,7 @@ namespace WowBot
 
         internal void SendLogin(bool isAcore, bool isDC, bool isBloogBot)
         {
-            Thread.Sleep(3000);
+            Thread.Sleep(2000);
             // Press enter to get rid of DC message
             if (isDC)
                 SendEnter();
@@ -160,13 +160,13 @@ namespace WowBot
             SendKeys("123");
             Thread.Sleep(200);
             SendEnter();
-            Thread.Sleep(9000);
+            Thread.Sleep(5000);
             SendEnter();
-            Thread.Sleep(9000);
+            Thread.Sleep(8000);
             System.Windows.Forms.SendKeys.SendWait("{ENTER}");
             Thread.Sleep(50);
             System.Windows.Forms.SendKeys.SendWait("{ENTER}");
-            Thread.Sleep(6000);
+            Thread.Sleep(10000);
         }
 
         internal void MouseClick()

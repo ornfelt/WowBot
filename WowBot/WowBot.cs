@@ -158,7 +158,7 @@ namespace WowBot
                 MySqlDataReader reader = command.ExecuteReader();
                 string race = "";
 
-                // Check if player isn't logged in
+                // Ensure player logged in
                 if (!reader.Read())
                 {
                     Console.WriteLine("Player not logged in. Trying to log in...");
@@ -166,16 +166,26 @@ namespace WowBot
                     // Execute SQL again
                     reader.Close();
                     reader = command.ExecuteReader();
-                    // Try one more time
+                    // Try two more times
                     if (!reader.Read())
                     {
-                        Console.WriteLine("Player still not logged in. Trying to log in once more...");
-                        inputManager.SendLogin(isAcore, false, false);
+                        Console.WriteLine("Player still not logged in. Trying to log in again...");
+                        Thread.Sleep(1000);
+                        inputManager.SendLogin(isAcore, true, false);
                         // Execute SQL again
                         reader.Close();
                         reader = command.ExecuteReader();
                         if (!reader.Read())
-                            Environment.Exit(0);
+                        {
+                            Console.WriteLine("Player still not logged in. Trying to log in once more...");
+                            Thread.Sleep(1000);
+                            inputManager.SendLogin(isAcore, false, false);
+                            // Execute SQL again
+                            reader.Close();
+                            reader = command.ExecuteReader();
+                            if (!reader.Read())
+                                Environment.Exit(0);
+                        }
                     }
                 }
 
