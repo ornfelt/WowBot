@@ -55,7 +55,7 @@ public class WowBot {
 	
 	// Settings
 	private static boolean isAcore = true; // AzerothCore or TrinityCore
-	private static boolean isLinux = true; // Linux or Windows
+	private static boolean isLinux = false; // Linux or Windows
 	
 	private static boolean isArena = false; // Start with BG when random
 	private static boolean isGroup = false; // If group queue (BG only)
@@ -76,7 +76,7 @@ public class WowBot {
 	// Horde races
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
 	
-	public WowBot() {
+	public WowBot(boolean isLinuxArg, boolean isAcoreArg) {
         initSettings();
 		rand = new Random();
 		try {
@@ -85,6 +85,9 @@ public class WowBot {
 			e.printStackTrace();
 		}
 		inputManager = new InputManager(r, isLinux);
+		isLinux = isLinuxArg;
+		isAcore = isAcoreArg;
+		System.out.println("isLinux: " + isLinux + ", isAcore: " + isAcore);
 		
 		//String myString = "DONE";
 		//StringSelection stringSelection = new StringSelection(myString);
