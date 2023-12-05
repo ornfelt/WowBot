@@ -39,6 +39,7 @@ public class WowTabFinder {
 	public static void showWowWindow() {
 		// Doesn't work that well with workspaces in X11 / Hyprland
     	//focusWindowByName("World of Warcraft");
+		//findWithXdotool();
     }
     
     private static void focusWindowByName(String windowNameToFocus) {
@@ -82,8 +83,8 @@ public class WowTabFinder {
 
         xlib.XFree(children[0]);
     }
-    
-    private static void FindWithXdotool() {
+
+    private static void findWithXdotool() {
         try {
             // Name or part of the name of the window you want to focus
             String windowName = "World of Warcraft"; 

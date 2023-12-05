@@ -84,10 +84,12 @@ public class WowBot {
 		} catch (AWTException e) {
 			e.printStackTrace();
 		}
-		inputManager = new InputManager(r, isLinux);
 		isLinux = isLinuxArg;
 		isAcore = isAcoreArg;
+		isLinux = true;
+		isAcore = true;
 		System.out.println("isLinux: " + isLinux + ", isAcore: " + isAcore);
+		inputManager = new InputManager(r, isLinux);
 		
 		//String myString = "DONE";
 		//StringSelection stringSelection = new StringSelection(myString);
