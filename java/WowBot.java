@@ -86,8 +86,6 @@ public class WowBot {
 		}
 		isLinux = isLinuxArg;
 		isAcore = isAcoreArg;
-		isLinux = true;
-		isAcore = true;
 		System.out.println("isLinux: " + isLinux + ", isAcore: " + isAcore);
 		inputManager = new InputManager(r, isLinux);
 		
