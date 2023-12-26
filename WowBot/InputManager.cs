@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms; // For key events and input events
@@ -7,6 +8,14 @@ namespace WowBot
 {
     internal class InputManager
     {
+
+        private readonly Dictionary<int, string> battlegroundNames = new Dictionary<int, string>()
+        {
+            { 0, "Warsong Gulch" },
+            { 1, "Arathi Basin" },
+            { 2, "Alterac Valley" }
+        };
+
         internal void JoinBattlefield(int index, bool isGroup)
         {
             //if (!WindowFinder.GetCurrentWindow().Contains(wowName))
@@ -42,7 +51,7 @@ namespace WowBot
 			// Join through Lua instead
 			String luaScript = "/run for i=1,GetNumBattlegroundTypes() do " +
                    "local name, x = GetBattlegroundInfo(i) " +
-                   "if name == '" + battlegroundNames.get(index) + "' then " +
+                   "if name == '" + battlegroundNames[index] + "' then " +
                    //"print(name .. x) " +
                    "PVPBattlegroundFrame.selectedBG = i " +
                    "end " +

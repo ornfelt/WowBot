@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 //using System.Data.SqlClient; // If you're using SQL Server
 using MySql.Data.MySqlClient;
@@ -49,8 +50,22 @@ namespace WowBot
 
         private void StartBot()
         {
-            ProcessHandler.StartProcess("D:\\My files\\svea_laptop\\code_hdd\\ml\\BloogBot\\Bot\\Bootstrapper.exe");
-            //ProcessHandler.StartProcess("C:\\Users\\jonas\\Code2\\C++\\BloogBot\\Bot\\Bootstrapper.exe");
+            string codeRootDir = Environment.GetEnvironmentVariable("code_root_dir");
+            if (string.IsNullOrWhiteSpace(codeRootDir))
+            {
+                Console.WriteLine("The 'code_root_dir' environment variable is not set.");
+                return;
+            }
+
+            string exePath = Path.Combine(codeRootDir, @"Code2\C#\BloogBot\Bot\Bootstrapper.exe");
+            if (!File.Exists(exePath))
+            {
+                Console.WriteLine($"The executable file '{exePath}' does not exist.");
+                return;
+            }
+
+            Console.WriteLine($"Using executable path: {exePath}");
+            ProcessHandler.StartProcess(exePath);
             Thread.Sleep(25000);
             inputManager.SendEnter(); // Get rid of VS debug message
             Thread.Sleep(8000);
