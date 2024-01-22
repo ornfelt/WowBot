@@ -45,9 +45,9 @@ public class WowBot {
 	private static MousePos acceptRess;
 
 	// Timers
-	private static final int WSGTIMER = 1700;
-	private static final int ABTIMER = 1500;
-	private static final int AVTIMER = 2650;
+	private static final int WSGTIMER = 1800;
+	private static final int ABTIMER = 1600;
+	private static final int AVTIMER = 2800;
 	private static int wsgTurnTimerAlly;
 	private static int wsgTurnTimerHorde;
 	private static int avTurnTimerAlly;
@@ -56,6 +56,7 @@ public class WowBot {
 	// Settings
 	private static boolean isAcore = true; // AzerothCore or TrinityCore
 	private static boolean isLinux = false; // Linux or Windows
+	private static boolean isLocalServer = true; // Connecting to local server or not
 	
 	private static boolean isArena = false; // Start with BG when random
 	private static boolean isGroup = false; // If group queue (BG only)
@@ -76,7 +77,7 @@ public class WowBot {
 	// Horde races
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
 	
-	public WowBot(boolean isLinuxArg, boolean isAcoreArg) {
+	public WowBot(boolean isLinuxArg, boolean isAcoreArg, String nonLocalServerSettingsArg) {
         initSettings();
 		rand = new Random();
 		try {
@@ -86,7 +87,24 @@ public class WowBot {
 		}
 		isLinux = isLinuxArg;
 		isAcore = isAcoreArg;
-		System.out.println("isLinux: " + isLinux + ", isAcore: " + isAcore);
+        if (!nonLocalServerSettingsArg.equals("")) {
+        	isLocalServer = false;
+            String[] parts = nonLocalServerSettingsArg.split(",");
+
+            if (parts.length >= 2) {
+                isAlly = parts[0].equals("1");
+
+                try {
+                    playerLevel = Integer.parseInt(parts[1]);
+                } catch (NumberFormatException e) {
+                    System.err.println("Error: The second part of nonLocalServerSettingsArg is not a valid integer.");
+                }
+            } else {
+                System.err.println("Error: nonLocalServerSettingsArg does not contain two values separated by a comma. Please provide isAlly and playerLevel like this: 0,80");
+                System.exit(0);
+            }
+        }
+		System.out.println("isLinux: " + isLinux + ", isAcore: " + isAcore + ", nonLocalServerSettings: " + nonLocalServerSettingsArg);
 		inputManager = new InputManager(r, isLinux);
 		
 		//String myString = "DONE";
@@ -317,7 +335,9 @@ public class WowBot {
 			threadSleep(3000);
 			setServer();
 			setCTA();
-			setPlayerSettings();
+			// Set player settings through local DB - unless player settings are already set through nonLocalServerSettingsArg
+			if (isLocalServer)
+				setPlayerSettings();
 			// 5s thread sleep delay
 			threadSleep(5000);
 			
