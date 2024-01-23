@@ -31,9 +31,9 @@ namespace WowBot
         private MousePos acceptRess;
 
         // Timers
-        private const int WSGTIMER = 1700;
-        private const int ABTIMER = 1500;
-        private const int AVTIMER = 2650;
+        private const int WSGTIMER = 1800;
+        private const int ABTIMER = 1600;
+        private const int AVTIMER = 2800;
         private int WsgTurnTimerAlly;
         private int WsgTurnTimerHorde;
         private int AvTurnTimerAlly;
@@ -42,6 +42,8 @@ namespace WowBot
         // Settings
         private readonly bool isAcore = true; // AzerothCore or TrinityCore
         private readonly bool isLinux = false; // Linux or Windows
+        private readonly bool isLocalServer = true; // Connecting to local server or not
+
         private static bool isArena = false; // Start with BG when random
         private static bool isGroup = false; // If group queue (BG only)
         private static bool otherCTA = false; // If other BG than WSG, AB, AV is call to arms 
@@ -61,12 +63,38 @@ namespace WowBot
         // Horde races
         private static List<int> hordeRaces = new List<int> { 2, 5, 6, 8, 10 };
 
-        internal WowBot(bool isAcore, InputManager inputManager)
+        internal WowBot(bool isAcore, string nonLocalServerSettings, InputManager inputManager)
         {
             InitSettings();
             rand = new Random();
             this.inputManager = inputManager;
             this.isAcore = isAcore;
+
+            if (nonLocalServerSettings != string.Empty)
+            {
+                isLocalServer = false;
+                var parts = nonLocalServerSettings.Split(';');
+                if (parts.Length >= 2)
+                {
+                    isAlly = parts[0] == "1";
+
+                    try
+                    {
+                        playerLevel = int.Parse(parts[1]);
+                    }
+                    catch (FormatException)
+                    {
+                        Console.Error.WriteLine("Error: The second part of nonLocalServerSettingsArg is not a valid integer.");
+                    }
+                }
+                else
+                {
+                    Console.Error.WriteLine("Error: nonLocalServerSettingsArg does not contain two values separated by a comma. Please provide isAlly and playerLevel like this: 0,80");
+                    Environment.Exit(0);
+                }
+            }
+
+            Console.WriteLine($"isLinux: {isLinux}, isAcore: {isAcore}, nonLocalServerSettings: {nonLocalServerSettings}");
         }
 
         private void InitSettings()
@@ -212,7 +240,8 @@ namespace WowBot
                 // Check game and player status
                 Thread.Sleep(3000);
                 SetCTA();
-                SetPlayerSettings();
+                if (isLocalServer)
+                    SetPlayerSettings();
                 // 5s thread sleep delay
                 Thread.Sleep(5000);
 

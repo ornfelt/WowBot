@@ -5,18 +5,31 @@ namespace WowBot
 {
     internal class Program
     {
+
+        // Usage:
+        // bloogbot: start with no arguments or with 'remote' if using remote wow server
+        // other wowbot: start with (isLinux, isAcore, nonLocalServerSettings), example: 1 1 or 1 1 0,80
         static void Main(string[] args)
         {
             //Dfs.StartDfs(); // DFS search wander nodes
 
             InputManager inputManager = new InputManager();
-            bool useBloogBot = true;
+            bool useBloogBot = args.Length < 2;
+            bool useBloogBotRemote = args.Length > 0 && args[0].ToLower().Contains("remote");
+            bool isLinux = false;
             bool isAcore = true;
+            string nonLocalServerSettings; // If non-local server, settings are provided like: 0,80 (isAlly, playerLevel)
+
+            for (int i = 0; i < args.Length; i++)
+                Console.WriteLine("arg " + i + ": " + args[i]);
+
+            isLinux = args.Length > 0 && args[0].Contains("1");
+            isAcore = args.Length > 1 && args[1].Contains("1");
+            nonLocalServerSettings = args.Length > 2 ? args[2] : "";
 
             if (useBloogBot)
             {
-                BotStarter botStarter = new BotStarter(isAcore, inputManager);
-
+                BotStarter botStarter = new BotStarter(isAcore, useBloogBotRemote, inputManager);
                 // Create a timer with a 5-minute interval (in milliseconds)
                 Timer timer = new Timer(5 * 60 * 1000); // 5 minutes = 5 * 60 seconds * 1000 milliseconds
                 // Hook up the Elapsed event for the timer
@@ -24,7 +37,7 @@ namespace WowBot
                 // Start the timer
                 timer.Start();
 
-                // This also works...
+                // Alternative - infinite loop
                 while (true)
                 {
                     botStarter.StartBotIfNotRunning();
@@ -35,7 +48,7 @@ namespace WowBot
             }
             else
             {
-                WowBot wowBot = new WowBot(isAcore, inputManager);
+                WowBot wowBot = new WowBot(isAcore, nonLocalServerSettings, inputManager);
                 WindowFinder.ShowWindow("World of Warcraft");
                 System.Threading.Thread.Sleep(1000);
                 Console.WriteLine($"Current window: {WindowFinder.GetCurrentWindow()}");

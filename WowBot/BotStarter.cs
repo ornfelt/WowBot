@@ -11,10 +11,12 @@ namespace WowBot
     {
         private readonly InputManager inputManager;
         private readonly bool isAcore = true; 
-        internal BotStarter(bool isAcore, InputManager inputManager)
+        private readonly bool isLocalServer = true; 
+        internal BotStarter(bool isAcore, bool isLocalServer, InputManager inputManager)
         {
             this.inputManager = inputManager;
             this.isAcore = isAcore;
+            this.isLocalServer = isLocalServer;
         }
 
         internal void StartBotIfNotRunning()
@@ -28,7 +30,7 @@ namespace WowBot
             else
             {
                 Console.WriteLine($"Process {processName} is running!");
-                if (!IsPlayerOnline())
+                if (isLocalServer && !IsPlayerOnline())
                 {
                     Console.WriteLine("Player not logged in. Closing Wow and starting bot again...");
                     WindowFinder.ShowWindow("World of Warcraft");
@@ -80,7 +82,7 @@ namespace WowBot
             inputManager.SendEnter();
             Thread.Sleep(3000);
             WindowFinder.ShowWindow("World of Warcraft");
-        } 
+        }
 
         private bool IsPlayerOnline()
         {
