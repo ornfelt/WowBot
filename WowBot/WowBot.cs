@@ -190,7 +190,7 @@ namespace WowBot
                 if (!reader.Read())
                 {
                     Console.WriteLine("Player not logged in. Trying to log in...");
-                    inputManager.SendLogin(isAcore, true, false);
+                    inputManager.SendLogin(isAcore, false, false);
                     // Execute SQL again
                     reader.Close();
                     reader = command.ExecuteReader();
@@ -486,7 +486,6 @@ namespace WowBot
                 Thread.Sleep(1000);
 
                 // Turn slightly in WSG beginning
-                inputManager.SendKeys("a");
                 inputManager.SendKey(Keys.A, isAlly ? WsgTurnTimerAlly : WsgTurnTimerHorde);
 
                 Thread.Sleep(500);
@@ -513,7 +512,7 @@ namespace WowBot
             for (int i = 0; i < 100 && timeInBg < bgTimer; i++)
             {
                 Thread.Sleep(2000);
-                inputManager.SendKey(Keys.W, 100);
+                inputManager.SendKey(Keys.W, 200);
 
                 // Auto run
                 Thread.Sleep(500);
