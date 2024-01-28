@@ -14,9 +14,9 @@ namespace WowBot
         private readonly bool isLocalServer = true; 
         internal BotStarter(bool isAcore, bool isLocalServer, InputManager inputManager)
         {
-            this.inputManager = inputManager;
             this.isAcore = isAcore;
             this.isLocalServer = isLocalServer;
+            this.inputManager = inputManager;
         }
 
         internal void StartBotIfNotRunning()
