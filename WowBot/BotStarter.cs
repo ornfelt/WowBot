@@ -27,6 +27,11 @@ namespace WowBot
                 Console.WriteLine($"Process {processName} is NOT running... Starting it!");
                 StartBot();
             }
+            else if (!IsPlayerOnline())
+            {
+                Console.WriteLine($"Process {processName} is running... But player is not online. Starting bot again...");
+                StartBot();
+            }
             else
             {
                 Console.WriteLine($"Process {processName} is running!");
