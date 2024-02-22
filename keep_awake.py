@@ -15,12 +15,15 @@ def click(x, y):
 
 #for i in range (0, MINUTES):
 while (1):
-    #click(55, 0)
-    click(900, 550)
-    time.sleep(30)
-    #click(85, 0)
-    click(950, 550)
-    time.sleep(30)
+    try:
+        #click(55, 0)
+        click(900, 550)
+        time.sleep(30)
+        #click(85, 0)
+        click(950, 550)
+        time.sleep(30)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 # Alt. 2
