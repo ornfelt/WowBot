@@ -40,10 +40,17 @@ namespace WowBot
                 // Alternative - infinite loop
                 while (true)
                 {
-                    botStarter.StartBotIfNotRunning();
-                    inputManager.SendEnterInWow(); // Get rid of crash message if any
-                    inputManager.SendEnterInWow(); // Get rid of crash message if any
-                    System.Threading.Thread.Sleep(300000); // 300000 milliseconds = 5 minutes
+                    try
+                    {
+                        botStarter.StartBotIfNotRunning();
+                        inputManager.SendEnterInWow(); // Get rid of crash message if any
+                        inputManager.SendEnterInWow(); // Get rid of crash message if any
+                        System.Threading.Thread.Sleep(300000); // 300000 milliseconds = 5 minutes
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
                 }
             }
             else
