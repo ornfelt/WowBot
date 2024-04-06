@@ -27,6 +27,9 @@ namespace WowBot
                 isAcore = args[1].Contains("1");
             nonLocalServerSettings = args.Length > 2 ? args[2] : "";
 
+            // Print variables
+            Console.WriteLine($"useBloogBot: {useBloogBot}, useBloogBotRemote: {useBloogBotRemote}, isLinux: {isLinux}, isAcore: {isAcore}, nonLocalServerSettings: {nonLocalServerSettings}");
+
             if (useBloogBot)
             {
                 BotStarter botStarter = new BotStarter(isAcore, useBloogBotRemote, inputManager);
