@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.sql.*;
 
@@ -65,14 +67,17 @@ public class WowBot {
 	private static boolean abCTA = false; // If AB is Call To Arms
 	private static boolean eyeCTA, strandCTA, isleCTA;
 	private static boolean isAlly = false; // Faction
+
+    private static boolean isAlreadyInBg = false;
+
 	private static int bgCount = 0; // Keep track of how many BGs / arenas that have been played
 	private static int bgCountMax = 6; // Max amount of bgCount before switching to BG / arena
 	private static int playerLevel = 0; // Player level
 	private static String bgInput = "ra"; // Both random BGs and arena
 	//private static String bgInput = "r"; // Random BGs
 	//private static String bgInput = "a"; // Random arenas
-	private static final String bgTeleSpotHorde = "silvermooncity";
-	private static final String bgTeleSpotAlly = "exodar";
+    private static final String[] bgTeleSpotHorde = {"silvermooncity", "orgrimmar", /*"thunderbluff",*/ "undercity", "dalaran", "shattrath"};
+    private static final String[] bgTeleSpotAlly = {"exodar", "stormwind", "darnassus", /*"ironforge",*/ "dalaran", "shattrath"};
 
 	// Horde races
 	private static List<Integer> hordeRaces = Arrays.asList(2, 5, 6, 8, 10 );
@@ -301,6 +306,54 @@ public class WowBot {
             System.out.println(exception);
         }
 	}
+
+    boolean isPlayerInBgMap() {
+        Connection connection = null;
+        System.out.println("Checking player map...");
+        try {
+            if (isLinux)
+                Class.forName("org.mariadb.jdbc.Driver");
+            else
+                Class.forName("com.mysql.cj.jdbc.Driver");
+            if (isAcore)
+                connection = DriverManager.getConnection(
+                        isLinux ? "jdbc:mariadb://localhost:3306/acore_characters" :
+                        "jdbc:mysql://localhost:3306/acore_characters",
+                        "acore", "acore");
+            else
+                connection = DriverManager.getConnection(
+                        isLinux ? "jdbc:mariadb://localhost:3306/characters" :
+                        "jdbc:mysql://localhost:3306/characters",
+                        "trinity", "trinity");
+
+            String sqlQuery = "select map from characters where online = 1";
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sqlQuery);
+
+            // Did we get a result? Required check since otherwise resultSet will be empty (if you don't do .next()...)
+            if (!resultSet.next()) {
+                return true; // Return true to make sure loop continues...
+            }
+
+            int map = resultSet.getInt("map");
+            System.out.println("Player is in map: " + map + " (" + bgMap.getOrDefault(map, "Unknown") + ")");
+
+            if (map != 30 && map != 489 && map != 529 && map != 559) {
+                System.out.println("Player is NOT in BG!");
+                return false;
+            }
+
+            resultSet.close();
+            statement.close();
+            connection.close();
+
+            return true;
+        }
+        catch (Exception exception) {
+            System.out.println(exception);
+            return true; // Return true to make sure loop continues...
+        }
+    }
 	
 	// Try to login
 	void tryLogin() {
@@ -329,6 +382,10 @@ public class WowBot {
 	
 	// Start BOT
 	void startBot() {
+        // Check if player is already in bg
+        if (isLocalServer)
+            isAlreadyInBg = isPlayerInBgMap();
+
 		while (true) {
 			WowTabFinder.showWowWindow();
 			// Check game and player status
@@ -429,6 +486,8 @@ public class WowBot {
 			bgTimer += 50;
 		
 		System.out.println("Playing arena: " + arenaId);
+        System.out.println("arena type: " + arenaMap.getOrDefault(arenaId, "Unknown"));
+
 		inputManager.joinBattlefield(arenaId, isGroup);
 		r.delay(1000);
 		inputManager.clickPopup(); // Accept queue
@@ -489,8 +548,18 @@ public class WowBot {
 
 			timeInBg += 11;
 			//System.out.println("End of loop... timeInBg: " + timeInBg + ", bgTimer: " + bgTimer);
+
+            if (isLocalServer && i > 3 && !isPlayerInBgMap())
+                break;
 		}
+
+        System.out.println("Arena loop finished... timeInBg: " + timeInBg);
 	}
+
+    // Get random teleport destination based on some capital cities
+    private static String getRandomTeleportSpot() {
+        return isAlly ? bgTeleSpotAlly[rand.nextInt(bgTeleSpotAlly.length)] : bgTeleSpotHorde[rand.nextInt(bgTeleSpotHorde.length)];
+    }
 	
 	// Start Battleground BOT
 	void startBgBot(int bg) {
@@ -498,86 +567,90 @@ public class WowBot {
 		int timeInBg = 0;
 		int bgTimer = 0;
 
-		// Teleport to some place fun
-		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(100);
-		if (isAlly)
-			inputManager.sendKeys(".tele " + bgTeleSpotAlly);
-		else
-			inputManager.sendKeys(".tele " + bgTeleSpotHorde);
-		r.delay(100);
-		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(5000);
-		
-		// Handle random BG
-		if (bg == 100) // Hard coded, 100 means random arena
-			bg = (playerLevel < 20) ? 0 : (playerLevel < 51) ? rand.nextInt(2) : rand.nextInt(3);
+        if (!isAlreadyInBg) {
+            // Teleport to some place fun
+            inputManager.sendKey(KeyEvent.VK_ENTER);
+            r.delay(100);
+            inputManager.sendKeys(".tele " + getRandomTeleportSpot());
+            r.delay(100);
+            inputManager.sendKey(KeyEvent.VK_ENTER);
+            r.delay(5000);
 
-		// Set BG timer
-		if (bg == 0)
-			bgTimer = WSGTIMER;
-		else if (bg == 1)
-			bgTimer = ABTIMER;
-		else
-			bgTimer = AVTIMER;
+            // Handle random BG
+            if (bg == 100) // Hard coded, 100 means random arena
+                bg = (playerLevel < 20) ? 0 : (playerLevel < 51) ? rand.nextInt(2) : rand.nextInt(3);
 
-        // Set BG queue index
-        int bgQueueIndex;
+            // Set BG timer
+            if (bg == 0)
+                bgTimer = WSGTIMER;
+            else if (bg == 1)
+                bgTimer = ABTIMER;
+            else
+                bgTimer = AVTIMER;
 
-		// This works 90% of the time
-		if (playerLevel < 20)
-			bgQueueIndex = 2;
-		else if (playerLevel < 51)
-			bgQueueIndex = (bg == 0 && !abCTA) || (bg == 1 && abCTA) ? 2 : 3;
-		else if (playerLevel < 61)
-			bgQueueIndex = bg == 0 ? (!abCTA && !avCTA ? 2 : 3) :
-				   bg == 1 ? (abCTA ? 2 : 3) :
-							 (avCTA ? 2 : 4);
-		else if (playerLevel < 71)
-			bgQueueIndex = bg == 0 ? (!abCTA && !avCTA && !eyeCTA ? 2 : 3) :
-				   bg == 1 ? (abCTA ? 2 : (eyeCTA || avCTA ? 4 : 3)) :
-							 (avCTA ? 2 : (eyeCTA ? 5 : 4));
-		else
-			bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
-				   bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
-							 (otherCTA ? 5 : avCTA ? 2 : 4);
+            // Set BG queue index
+            int bgQueueIndex;
 
-        System.out.println("Queueing for bg: " + bg + ", bgQueueIndex: " + bgQueueIndex);
+            // This works 90% of the time
+            if (playerLevel < 20)
+                bgQueueIndex = 2;
+            else if (playerLevel < 51)
+                bgQueueIndex = (bg == 0 && !abCTA) || (bg == 1 && abCTA) ? 2 : 3;
+            else if (playerLevel < 61)
+                bgQueueIndex = bg == 0 ? (!abCTA && !avCTA ? 2 : 3) :
+                    bg == 1 ? (abCTA ? 2 : 3) :
+                    (avCTA ? 2 : 4);
+            else if (playerLevel < 71)
+                bgQueueIndex = bg == 0 ? (!abCTA && !avCTA && !eyeCTA ? 2 : 3) :
+                    bg == 1 ? (abCTA ? 2 : (eyeCTA || avCTA ? 4 : 3)) :
+                    (avCTA ? 2 : (eyeCTA ? 5 : 4));
+            else
+                bgQueueIndex = bg == 0 ? (otherCTA || abCTA || avCTA ? 3 : 2) :
+                    bg == 1 ? (otherCTA || avCTA ? 4 : abCTA ? 2 : 3) :
+                    (otherCTA ? 5 : avCTA ? 2 : 4);
 
-		// Join BG
-		//inputManager.selectBg(bgQueueIndex);
-		inputManager.selectBg(bg); // Use lua instead
-		inputManager.joinBattlefield(0, isGroup);
-		inputManager.clickPopup(); // Accept queue
-		r.delay(7000);
+            System.out.println("Queueing for bg: " + bg + ", bgQueueIndex: " + bgQueueIndex);
+            System.out.println("bg name: " + simpleBgMap.getOrDefault(bg, "Unknown"));
 
-		// Wait for BG to start...
-		if (bg == 0) {
-			r.delay(1000);
-			inputManager.sendKey(KeyEvent.VK_D, 500);
-			r.delay(500);
-			inputManager.sendKey(KeyEvent.VK_W, 1700);
-			r.delay(1000);
+            // Join BG
+            //inputManager.selectBg(bgQueueIndex);
+            inputManager.selectBg(bg); // Use lua instead
+            inputManager.joinBattlefield(0, isGroup);
+            inputManager.clickPopup(); // Accept queue
+            r.delay(7000);
 
-			// Turn slightly in WSG beginning
-			inputManager.sendKey(KeyEvent.VK_A, isAlly ? wsgTurnTimerAlly : wsgTurnTimerHorde);
+            // Wait for BG to start...
+            if (bg == 0) {
+                r.delay(1000);
+                inputManager.sendKey(KeyEvent.VK_D, 500);
+                r.delay(500);
+                inputManager.sendKey(KeyEvent.VK_W, 1700);
+                r.delay(1000);
 
-			r.delay(500);
-			inputManager.sendKey(KeyEvent.VK_W, 1500);
-			r.delay(46000);
-		} else {
-			for (int i = 0; i < 5; i++) {
-				r.delay(9000);
-				inputManager.sendKey(KeyEvent.VK_W, 1000);
-				r.delay(100);
-				
-				// Turn slightly in AV beginning
-				if (bg == 2 && i == 0)
-					inputManager.sendKey(KeyEvent.VK_A, 100);
-				else if (bg == 2 && i == 4)
-					inputManager.sendKey(KeyEvent.VK_D, isAlly ? avTurnTimerAlly : avTurnTimerHorde);
-			}
-		}
+                // Turn slightly in WSG beginning
+                inputManager.sendKey(KeyEvent.VK_A, isAlly ? wsgTurnTimerAlly : wsgTurnTimerHorde);
+
+                r.delay(500);
+                inputManager.sendKey(KeyEvent.VK_W, 1500);
+                r.delay(46000);
+            } else {
+                for (int i = 0; i < 5; i++) {
+                    r.delay(9000);
+                    inputManager.sendKey(KeyEvent.VK_W, 1000);
+                    r.delay(100);
+
+                    // Turn slightly in AV beginning
+                    if (bg == 2 && i == 0)
+                        inputManager.sendKey(KeyEvent.VK_A, 100);
+                    else if (bg == 2 && i == 4)
+                        inputManager.sendKey(KeyEvent.VK_D, isAlly ? avTurnTimerAlly : avTurnTimerHorde);
+                }
+            }
+        } else {
+            System.out.println("Player is already in BG. Jumping to random bot bg behaviour...");
+            bgTimer = AVTIMER;
+            isAlreadyInBg = false;
+        }
 		
 		// Random walking and some spell casts
 		for (int i = 0; i < 100 && timeInBg < bgTimer; i++) {
@@ -644,10 +717,13 @@ public class WowBot {
 			// Use R spell
 			inputManager.sendKey(KeyEvent.VK_R);
 			//System.out.println("End of loop... timeInBg: " + timeInBg + ", bgTimer: " + bgTimer);
+
+            if (isLocalServer && i > 3 && !isPlayerInBgMap())
+                break;
 		}
-		if (bg == 2)
-			System.out.println("AV loop finished... timeInBg: " + timeInBg);
-	}
+
+        System.out.println("BG loop finished... timeInBg: " + timeInBg);
+    }
 	
 	// Thread.Sleep for x amount of time
 	void threadSleep(int sleepTime) {
@@ -657,4 +733,39 @@ public class WowBot {
 			e.printStackTrace();
 		}
 	}
+
+    // HashMaps useful for printing...
+    // MapId -> MapName
+    private static final Map<Integer, String> bgMap = new HashMap<>();
+    static {
+        bgMap.put(0, "Eastern Kingdoms");
+        bgMap.put(1, "Kalimdor");
+        bgMap.put(30, "Alterac Valley");
+        bgMap.put(489, "Warsong Gulch");
+        bgMap.put(529, "Arathi Basin");
+        bgMap.put(530, "Outland");
+        bgMap.put(559, "Nagrand Arena");
+        bgMap.put(562, "Blade's Edge Arena");
+        bgMap.put(566, "Eye of the Storm");
+        bgMap.put(571, "Northrend");
+        bgMap.put(572, "Ruins of Lordaeron");
+        bgMap.put(607, "Strand of the Ancients");
+        bgMap.put(628, "Isle of Conquest");
+    }
+
+    // Get BG name based on random bg index
+    private static final Map<Integer, String> simpleBgMap = new HashMap<>();
+    static {
+        simpleBgMap.put(0, "Warsong Gulch");
+        simpleBgMap.put(1, "Arathi Basin");
+        simpleBgMap.put(2, "Alterac Valley");
+    }
+
+    // Get arena name based on random arena index
+    private static final Map<Integer, String> arenaMap = new HashMap<>();
+    static {
+        arenaMap.put(1, "2v2");
+        arenaMap.put(2, "3v3");
+        arenaMap.put(3, "5v5");
+    }
 }

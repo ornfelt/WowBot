@@ -31,3 +31,6 @@ graph_wander_nodes/
 **/obj
 **/Properties
 packages/
+
+*.class
+*.jar
