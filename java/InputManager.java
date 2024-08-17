@@ -81,9 +81,9 @@ public class InputManager {
 		if (!WowTabFinder.GetCurrentWindow().contains(wowName))
 			return;
 		r.keyPress(key);
-		r.delay(60);
+		r.delay(200);
 		r.keyRelease(key);
-		r.delay(60);
+		r.delay(200);
 	}
 
 	void sendKey(int key, int delay) {

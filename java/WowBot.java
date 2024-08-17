@@ -47,9 +47,12 @@ public class WowBot {
 	private static MousePos acceptRess;
 
 	// Timers
-	private static final int WSGTIMER = 1800;
-	private static final int ABTIMER = 1600;
-	private static final int AVTIMER = 2800;
+	//private static final int WSGTIMER = 1800;
+	//private static final int ABTIMER = 1600;
+	//private static final int AVTIMER = 2800;
+	private static final int WSGTIMER = 4000;
+	private static final int ABTIMER = 4000;
+	private static final int AVTIMER = 4000;
 	private static int wsgTurnTimerAlly;
 	private static int wsgTurnTimerHorde;
 	private static int avTurnTimerAlly;
@@ -396,7 +399,7 @@ public class WowBot {
 			if (isLocalServer)
 				setPlayerSettings();
 			// 5s thread sleep delay
-			threadSleep(5000);
+			threadSleep(15000);
 			
 			switch(bgInput) {
 			case "0":
@@ -451,6 +454,7 @@ public class WowBot {
 
 	// Start Arena BOT
 	void startArenaBot(int arenaId) {
+        threadSleep(10000);
 		// Settings
 		int timeInBg = 0;
 		int maxActionTime = 45;
@@ -459,21 +463,22 @@ public class WowBot {
 		r.delay(1000);
 		// Teleport to arena NPC
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(200);
+		r.delay(500);
 		if (isAlly)
 			inputManager.sendKeys(".go creature 68938"); // select guid from creature where id1=19911; (id from arena npc from wowhead)
 		else
 			inputManager.sendKeys(".go creature 4762"); // select guid from creature where id1=19912; (id from arena npc from wowhead)
 		inputManager.sendKey(KeyEvent.VK_ENTER);
 
-		r.delay(5000);
+		r.delay(15000);
 		// /target arena char and interact with him
 		inputManager.sendKey(KeyEvent.VK_ENTER);
-		r.delay(200);
+		r.delay(500);
 		if (isAlly)
 			inputManager.sendKeys("/target beka");
 		else
 			inputManager.sendKeys("/target zeggon");
+		r.delay(500);
 		inputManager.sendKey(KeyEvent.VK_ENTER);
 		r.delay(700);
 		inputManager.sendKey(KeyEvent.VK_9);
@@ -563,6 +568,7 @@ public class WowBot {
 	
 	// Start Battleground BOT
 	void startBgBot(int bg) {
+        threadSleep(10000);
 		// Settings
 		int timeInBg = 0;
 		int bgTimer = 0;
@@ -570,11 +576,11 @@ public class WowBot {
         if (!isAlreadyInBg) {
             // Teleport to some place fun
             inputManager.sendKey(KeyEvent.VK_ENTER);
-            r.delay(100);
+            r.delay(500);
             inputManager.sendKeys(".tele " + getRandomTeleportSpot());
-            r.delay(100);
+            r.delay(500);
             inputManager.sendKey(KeyEvent.VK_ENTER);
-            r.delay(5000);
+            r.delay(12000);
 
             // Handle random BG
             if (bg == 100) // Hard coded, 100 means random arena
