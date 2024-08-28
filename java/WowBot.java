@@ -399,7 +399,7 @@ public class WowBot {
 			if (isLocalServer)
 				setPlayerSettings();
 			// 5s thread sleep delay
-			threadSleep(15000);
+			threadSleep(5000);
 			
 			switch(bgInput) {
 			case "0":
@@ -454,7 +454,6 @@ public class WowBot {
 
 	// Start Arena BOT
 	void startArenaBot(int arenaId) {
-        threadSleep(5000);
 		// Settings
 		int timeInBg = 0;
 		int maxActionTime = 45;
@@ -568,7 +567,6 @@ public class WowBot {
 	
 	// Start Battleground BOT
 	void startBgBot(int bg) {
-        threadSleep(5000);
 		// Settings
 		int timeInBg = 0;
 		int bgTimer = 0;
