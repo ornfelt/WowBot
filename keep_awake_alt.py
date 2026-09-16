@@ -4,6 +4,7 @@ This is an updated version of keep_wake.py which supports windows and linux
 key or mouse clicked recently...
 """
 
+import sys
 import time
 import threading
 from pynput import mouse, keyboard
@@ -33,9 +34,31 @@ def _mark_activity(*args, **kwargs):
         _last_activity = time.monotonic()
 
 
+def os_idle_seconds():
+    """
+    Seconds since the last input anywhere in the session (Windows GetLastInputInfo).
+    Unlike pynput hooks this also sees input going to elevated windows (e.g. a game
+    run as admin) and cannot be silently unhooked by Windows. None elsewhere.
+    """
+    if not sys.platform.startswith("win"):
+        return None
+    import ctypes  # lazy import (only on Windows)
+
+    class LASTINPUTINFO(ctypes.Structure):
+        _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+
+    lii = LASTINPUTINFO()
+    lii.cbSize = ctypes.sizeof(lii)
+    if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii)):
+        return None
+    return ((ctypes.windll.kernel32.GetTickCount() - lii.dwTime) & 0xFFFFFFFF) / 1000.0
+
+
 def idle_for_seconds() -> float:
     with _lock:
-        return time.monotonic() - _last_activity
+        idle = time.monotonic() - _last_activity
+    os_idle = os_idle_seconds()
+    return idle if os_idle is None else min(idle, os_idle)
 
 
 def click(x: int, y: int):

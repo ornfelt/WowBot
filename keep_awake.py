@@ -10,8 +10,26 @@ import threading
 
 IDLE_SECONDS_BEFORE_CLICK = 30
 CLICK_XY_1 = (900, 550)
-CLICK_XY_2 = (950, 550)
-DELAY_BETWEEN_CLICKS = 30  # only perform 2nd click if user stays idle during this delay
+
+
+def os_idle_seconds():
+    """
+    Seconds since the last input anywhere in the session (Windows GetLastInputInfo).
+    Unlike pynput hooks this also sees input going to elevated windows (e.g. a game
+    run as admin) and cannot be silently unhooked by Windows. None elsewhere.
+    """
+    if not sys.platform.startswith("win"):
+        return None
+    import ctypes  # lazy import (only on Windows)
+
+    class LASTINPUTINFO(ctypes.Structure):
+        _fields_ = [("cbSize", ctypes.c_uint), ("dwTime", ctypes.c_uint)]
+
+    lii = LASTINPUTINFO()
+    lii.cbSize = ctypes.sizeof(lii)
+    if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii)):
+        return None
+    return ((ctypes.windll.kernel32.GetTickCount() - lii.dwTime) & 0xFFFFFFFF) / 1000.0
 
 
 class IdleTracker:
@@ -29,7 +47,9 @@ class IdleTracker:
 
     def idle_for(self) -> float:
         with self._lock:
-            return time.monotonic() - self._last_activity
+            idle = time.monotonic() - self._last_activity
+        os_idle = os_idle_seconds()
+        return idle if os_idle is None else min(idle, os_idle)
 
     def start(self) -> None:
         from pynput import mouse, keyboard  # runtime import
@@ -78,20 +98,6 @@ def click(x: int, y: int) -> None:
         m.click(Button.left, 1)
 
 
-def sleep_if_still_idle(tracker: IdleTracker, seconds: float) -> bool:
-    """
-    Sleeps up to `seconds`, but returns False early if user becomes active.
-    Returns True if the entire sleep completed while staying idle.
-    """
-    end = time.monotonic() + seconds
-    while time.monotonic() < end:
-        # If the user did anything recently, abort the sleep
-        if tracker.idle_for() < IDLE_SECONDS_BEFORE_CLICK:
-            return False
-        time.sleep(0.2)
-    return True
-
-
 def wait_until_idle(tracker: IdleTracker, idle_seconds: float) -> None:
     while tracker.idle_for() < idle_seconds:
         time.sleep(0.2)
@@ -105,7 +111,7 @@ def main():
 
     print(f"[i] Running on: {sys.platform}")
     print(f"[i] Will click only after {IDLE_SECONDS_BEFORE_CLICK}s of no input.")
-    print(f"[i] Click1={CLICK_XY_1}, Click2={CLICK_XY_2}, delay={DELAY_BETWEEN_CLICKS}s")
+    print(f"[i] Click1={CLICK_XY_1}")
 
     while True:
         try:
@@ -117,16 +123,6 @@ def main():
                 print("[i] Idle detected -> click #1")
             click(*CLICK_XY_1)
             tracker.touch()  # treat our click as activity so we don't immediately re-trigger
-
-            # Only do click #2 if user stays idle throughout the delay
-            if sleep_if_still_idle(tracker, DELAY_BETWEEN_CLICKS):
-                if use_debug_prints:
-                    print("[i] Still idle -> click #2")
-                click(*CLICK_XY_2)
-                tracker.touch()
-            else:
-                if use_debug_prints:
-                    print("[i] User activity detected -> skipping click #2")
 
         except Exception as e:
             print(f"[err] {e}")

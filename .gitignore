@@ -34,3 +34,5 @@ packages/
 
 *.class
 *.jar
+
+__pycache__/
